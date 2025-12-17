@@ -1,0 +1,5 @@
+# disable lints in global configuration
+[language-server.rust-analyzer.config.check]
+features = "all"
+command = "clippy"
+extraArgs = ["--", "--no-deps"]
