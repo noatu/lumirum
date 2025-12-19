@@ -41,3 +41,13 @@ pub struct AuthRequest {
     #[schema(min_length = 8, example = "password!")]
     pub password: String,
 }
+
+#[derive(Deserialize, Validate, ToSchema)]
+pub struct ChangePasswordRequest {
+    #[garde(skip)]
+    #[schema(example = "password!")]
+    pub old_password: String,
+    #[garde(length(min = 8))]
+    #[schema(min_length = 8, example = "better password")]
+    pub new_password: String,
+}

@@ -72,4 +72,21 @@ impl User {
         .await
         .map_err(Error::from)
     }
+
+    pub async fn update_password(
+        &mut self,
+
+        pool: &PgPool,
+        password_hash: String,
+    ) -> Result<(), Error> {
+        sqlx::query!(
+            "UPDATE users SET password_hash = $1 WHERE id = $2",
+            password_hash,
+            self.id
+        )
+        .execute(pool)
+        .await?;
+        self.password_hash = password_hash;
+        Ok(())
+    }
 }

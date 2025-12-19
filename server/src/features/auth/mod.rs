@@ -18,6 +18,7 @@ use utoipa_axum::{
 
 use crate::AppState;
 
+mod change_password;
 mod db;
 mod get_me;
 mod jwt;
@@ -35,6 +36,7 @@ pub fn router() -> OpenApiRouter<AppState> {
     OpenApiRouter::new()
         .routes(routes!(register::register))
         .routes(routes!(login::login))
+        .routes(routes!(change_password::change_password))
         .routes(routes!(get_me::get_me))
 }
 

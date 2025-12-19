@@ -41,6 +41,8 @@ error_set! {
     }
 
 
+    // AUTH
+
     #[derive(IntoResponses)]
     #[skip(Error,Display,Debug)]
     Register := Validation || InternalError || {
@@ -57,7 +59,16 @@ error_set! {
     Login := Validation || InternalError ||  WrongCredentials || {
         /// Login Successful
         #[response(status = OK)]
-        AuthorizationSuccess(AuthResponse),
+        Success(AuthResponse),
+
+    }
+
+    #[derive(IntoResponses)]
+    #[skip(Error,Display,Debug)]
+    ChangePassword := Validation || InternalError ||  WrongCredentials ||  Jwt || {
+        /// Password Changed Successfully
+        #[response(status = OK)]
+        Success(AuthResponse),
 
     }
 
@@ -68,4 +79,7 @@ error_set! {
         #[response(status = OK)]
         AuthorizationSuccess(AuthResponse),
     }
+
+
+    // OTHER
 }
