@@ -8,27 +8,31 @@ use utoipa_scalar::{
     Servable,
 };
 
-use crate::AppState;
-
-mod system;
+use crate::features::{
+    auth::{
+        self,
+        AuthResponse,
+        SecurityAddon,
+    },
+    system,
+};
 
 #[derive(OpenApi)]
 #[openapi(
+    modifiers(&SecurityAddon),
     info(
         title = "LumiRum",
         version = env!("CARGO_PKG_VERSION"),
         description = "LumiRum OpenAPI Specification",
     ),
-    tags(
-        (name = system::TAG, description = "System endpoints"),
-    )
+    components(schemas(AuthResponse))
 )]
 struct ApiDoc;
 
-pub fn router() -> Router<AppState> {
+pub fn router() -> Router<crate::AppState> {
     let (router, api) = OpenApiRouter::with_openapi(ApiDoc::openapi())
         .merge(system::router())
-        // .nest("/nested", nested::router())
+        .nest("/auth", auth::router())
         .split_for_parts();
 
     tracing::info!("Scalar is available at /");

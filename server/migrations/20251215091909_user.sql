@@ -9,7 +9,7 @@ CREATE TABLE users (
     username TEXT NOT NULL UNIQUE CHECK (length(username) >= 3),
     password_hash TEXT NOT NULL, -- argon2id
     role user_role NOT NULL DEFAULT 'user',
-    created_at TIMESTAMP NOT NULL DEFAULT NOW()
+    created_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
 );
 
 -- INSERT INTO users (username, password_hash, role) VALUES -- password: 'test'

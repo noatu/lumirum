@@ -8,12 +8,13 @@ use std::time::Duration;
 
 pub async fn setup_pool(url: &str) -> Result<PgPool> {
     let pool = PgPoolOptions::new()
-        .max_connections(5)
+        .max_connections(3)
         .acquire_timeout(Duration::from_secs(5))
         .connect(url)
         .await?;
     tracing::debug!("database pool connected");
 
+    tracing::debug!("running migrations");
     sqlx::migrate!().run(&pool).await?;
     tracing::debug!("finished running migrations");
 
