@@ -8,7 +8,7 @@ CREATE TYPE user_role AS ENUM (
 
 CREATE TABLE users (
     id BIGSERIAL PRIMARY KEY,
-    username TEXT NOT NULL UNIQUE CHECK (length(username) >= 3),
+    username TEXT NOT NULL CONSTRAINT users_username_key UNIQUE CHECK (length(username) >= 3),
     password_hash TEXT NOT NULL, -- argon2id
     role user_role NOT NULL DEFAULT 'owner',
     -- If role is 'user', this MUST NOT be NULL.
@@ -47,7 +47,7 @@ CREATE TABLE profiles (
 
     created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
 
-    UNIQUE (owner_id, name),
+    CONSTRAINT profiles_owner_id_name_key UNIQUE (owner_id, name),
     CHECK (min_color_temp <= max_color_temp)
 );
 
@@ -70,8 +70,8 @@ CREATE TABLE devices (
 
     created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
 
-    UNIQUE (owner_id, mac_address),
-    UNIQUE (owner_id, name)
+    CONSTRAINT devices_owner_id_mac_address_key UNIQUE (owner_id, mac_address),
+    CONSTRAINT devices_owner_id_name_key UNIQUE (owner_id, name)
 );
 
 CREATE INDEX idx_devices_owner_id ON devices(owner_id);

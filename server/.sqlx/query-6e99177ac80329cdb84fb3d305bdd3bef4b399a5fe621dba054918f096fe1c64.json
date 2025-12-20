@@ -1,6 +1,6 @@
 {
   "db_name": "PostgreSQL",
-  "query": "INSERT INTO users (username, password_hash, role) VALUES ($1, $2, $3)\n                RETURNING id, username, password_hash, role AS \"role: Role\", created_at",
+  "query": "INSERT INTO users (username, password_hash, role, parent_id)\n               VALUES ($1, $2, $3, $4)\n               RETURNING id, username, password_hash, role AS \"role: Role\",\n                         parent_id, created_at",
   "describe": {
     "columns": [
       {
@@ -36,6 +36,11 @@
       },
       {
         "ordinal": 4,
+        "name": "parent_id",
+        "type_info": "Int8"
+      },
+      {
+        "ordinal": 5,
         "name": "created_at",
         "type_info": "Timestamptz"
       }
@@ -55,7 +60,8 @@
               ]
             }
           }
-        }
+        },
+        "Int8"
       ]
     },
     "nullable": [
@@ -63,8 +69,9 @@
       false,
       false,
       false,
+      true,
       false
     ]
   },
-  "hash": "3425fd890c626c544afc0affebbbfbf3f652f47e5ec52d171ad7210a30e7af5a"
+  "hash": "6e99177ac80329cdb84fb3d305bdd3bef4b399a5fe621dba054918f096fe1c64"
 }

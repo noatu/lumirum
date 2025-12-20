@@ -16,12 +16,15 @@ use crate::{
     AppState,
     errors::Error,
     extractors::Validated,
+
     features::auth::{
         AuthRequest,
         AuthResponse,
-        Role,
         TAG,
-        db::User,
+        db::{
+            TypedRole,
+            User,
+        },
         jwt::sign,
     },
     responses::Register,
@@ -33,16 +36,13 @@ use crate::{
     path = "/register",
     request_body = AuthRequest,
     responses(Register),
-    tag = TAG
+    tag = TAG,
+    // security((), ("jwt" = [])) TODO: register other users
 )]
 pub async fn register(
     State(state): State<AppState>,
     Validated(payload): Validated<AuthRequest>,
 ) -> Result<(StatusCode, Json<AuthResponse>), Error> {
-    if User::exits(&state.pool, &payload.username).await? {
-        return Err(Error::UsernameTaken);
-    }
-
     let password_hash = Argon2::default()
         .hash_password(
             payload.password.as_bytes(),
@@ -50,7 +50,14 @@ pub async fn register(
         )?
         .to_string();
 
-    let user = User::create(&state.pool, payload.username, password_hash, Role::Owner).await?;
+    let user = User::create(
+        &state.pool,
+        &payload.username,
+        &password_hash,
+        TypedRole::Owner,
+    )
+    .await?;
+
     let token = sign(user.id, &user.username, user.role, &state.jwt_secret)?;
     Ok((StatusCode::CREATED, Json(AuthResponse { user, token })))
 }

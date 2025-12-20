@@ -35,7 +35,7 @@ struct ApiDoc;
 pub fn router() -> Router<crate::AppState> {
     let (router, api) = OpenApiRouter::with_openapi(ApiDoc::openapi())
         .merge(system::router())
-        .nest("/auth", auth::router())
+        .nest("/auth", auth::router()) // TODO: manual user creation
         .split_for_parts();
 
     tracing::info!("Scalar is available at /");

@@ -34,7 +34,6 @@ mod jwt;
 mod routes {
     pub mod login;
     pub mod me;
-    pub mod password;
     pub mod register;
 }
 
@@ -46,11 +45,14 @@ pub fn router() -> OpenApiRouter<AppState> {
     OpenApiRouter::new()
         .routes(routes!(routes::register::register))
         .routes(routes!(routes::login::login))
-        .routes(routes!(routes::password::change_password))
-        .routes(routes!(routes::me::get_me))
+        .routes(routes!(
+            routes::me::get,
+            routes::me::patch,
+            routes::me::delete
+        ))
 }
 
-#[derive(Clone, Copy, Type, Serialize, Deserialize, ToSchema)]
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Type, Serialize, Deserialize, ToSchema)]
 #[serde(rename_all = "snake_case")]
 #[sqlx(type_name = "user_role", rename_all = "snake_case")]
 pub enum Role {
@@ -73,6 +75,7 @@ struct AuthRequest {
     #[garde(alphanumeric, length(chars, min = 3, max = 25))]
     #[schema(min_length = 3, max_length = 25, example = "john")]
     pub username: String,
+    // FIXME: login should have no minimal limit for length
     #[garde(length(min = 8))]
     #[schema(min_length = 8, example = "lumirum!")]
     pub password: String,

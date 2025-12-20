@@ -15,6 +15,14 @@ use thiserror::Error;
 pub enum Error {
     #[error("username is taken")]
     UsernameTaken,
+    #[error("profile name is already in use")]
+    ProfileNameTaken,
+    #[error("device MAC address is already registered")]
+    DeviceMACTaken,
+    #[error("device name is already in use")]
+    DeviceNameTaken,
+    #[error("cannot delete last administrator account")]
+    CannotDeleteLastAdmin,
 
     #[error("credentials are wrong")]
     UserNotFound, // NOTE: IntoStaticStr leaks this detail
@@ -35,7 +43,7 @@ pub enum Error {
 
     // Internal
     #[error("database: {0}")]
-    Database(#[from] sqlx::Error),
+    Database(sqlx::Error),
     #[error("password hash: {0}")]
     PasswordHash(argon2::password_hash::Error),
     #[error("json web token: {0}")]
@@ -45,12 +53,18 @@ pub enum Error {
 impl From<&Error> for StatusCode {
     fn from(value: &Error) -> Self {
         match value {
-            Error::UsernameTaken => Self::CONFLICT,
+            Error::UsernameTaken
+            | Error::ProfileNameTaken
+            | Error::DeviceMACTaken
+            | Error::DeviceNameTaken
+            | Error::CannotDeleteLastAdmin => Self::CONFLICT,
+
             Error::UserNotFound
             | Error::WrongCredentials
             | Error::MissingCredentials
             | Error::InvalidToken
             | Error::TokenExpired => Self::UNAUTHORIZED,
+
             Error::InvalidData(_) => Self::UNPROCESSABLE_ENTITY,
             Error::InvalidJson(_) => Self::BAD_REQUEST,
             Error::Database(_) | Error::PasswordHash(_) | Error::Jwt(_) => {
@@ -66,6 +80,24 @@ impl From<argon2::password_hash::Error> for Error {
             argon2::password_hash::Error::Password => Self::WrongCredentials,
             _ => Self::PasswordHash(error),
         }
+    }
+}
+
+impl From<sqlx::Error> for Error {
+    fn from(error: sqlx::Error) -> Self {
+        if let sqlx::Error::Database(err) = &error
+            && err.is_unique_violation()
+            && let Some(constraint) = err.constraint()
+        {
+            return match constraint {
+                "users_username_key" => Self::UsernameTaken,
+                "profiles_owner_id_name_key" => Self::ProfileNameTaken,
+                "devices_owner_id_mac_address_key" => Self::DeviceMACTaken,
+                "devices_owner_id_name_key" => Self::DeviceNameTaken,
+                _ => Self::Database(error),
+            };
+        }
+        Self::Database(error)
     }
 }
 

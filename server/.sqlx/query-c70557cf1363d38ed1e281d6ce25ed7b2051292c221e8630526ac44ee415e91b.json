@@ -1,6 +1,6 @@
 {
   "db_name": "PostgreSQL",
-  "query": "SELECT id, username, password_hash, role AS \"role: Role\", created_at FROM users WHERE id = $1",
+  "query": "SELECT id, username, password_hash, role AS \"role: Role\",\n                      parent_id, created_at\n               FROM users WHERE id = $1 FOR UPDATE",
   "describe": {
     "columns": [
       {
@@ -36,6 +36,11 @@
       },
       {
         "ordinal": 4,
+        "name": "parent_id",
+        "type_info": "Int8"
+      },
+      {
+        "ordinal": 5,
         "name": "created_at",
         "type_info": "Timestamptz"
       }
@@ -50,8 +55,9 @@
       false,
       false,
       false,
+      true,
       false
     ]
   },
-  "hash": "5c82e29759515c00ae15d41d256866d662f4df527605810b54267ba25e6a5c88"
+  "hash": "c70557cf1363d38ed1e281d6ce25ed7b2051292c221e8630526ac44ee415e91b"
 }

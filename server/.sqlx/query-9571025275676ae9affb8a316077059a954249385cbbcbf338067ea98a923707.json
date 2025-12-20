@@ -1,6 +1,6 @@
 {
   "db_name": "PostgreSQL",
-  "query": "SELECT id, username, password_hash, role AS \"role: Role\", created_at FROM users WHERE username = $1",
+  "query": "SELECT id, username, password_hash, role AS \"role: Role\",\n                      parent_id, created_at\n               FROM users WHERE username = $1",
   "describe": {
     "columns": [
       {
@@ -36,6 +36,11 @@
       },
       {
         "ordinal": 4,
+        "name": "parent_id",
+        "type_info": "Int8"
+      },
+      {
+        "ordinal": 5,
         "name": "created_at",
         "type_info": "Timestamptz"
       }
@@ -50,8 +55,9 @@
       false,
       false,
       false,
+      true,
       false
     ]
   },
-  "hash": "132fb91cac16dedccc120d8456a2e2227bf3fdc1cecbec71293359276854f0af"
+  "hash": "9571025275676ae9affb8a316077059a954249385cbbcbf338067ea98a923707"
 }

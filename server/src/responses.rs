@@ -19,25 +19,25 @@ error_set! {
 
     #[derive(IntoResponses)]
     InternalServerError {
-        /// Internal Server Error
+        /// Internal server error
         #[response(status = INTERNAL_SERVER_ERROR)]
         InternalServerError(ErrorResponse),
     }
     #[derive(IntoResponses)]
     BadRequest {
-        /// Invalid JSON Structure or Invalid Request
+        /// Invalid json structure or invalid request
         #[response(status = BAD_REQUEST)]
         BadRequest(ErrorResponse),
     }
     #[derive(IntoResponses)]
     UnprocessableEntity {
-        /// Data Validation Failed
+        /// Data validation failed
         #[response(status = UNPROCESSABLE_ENTITY)]
         UnprocessableEntity(ErrorResponse),
     }
     #[derive(IntoResponses)]
     Unauthorized {
-        /// Credentials are Invalid
+        /// Credentials are invalid
         #[response(status = UNAUTHORIZED)]
         Unauthorized(ErrorResponse),
     }
@@ -47,32 +47,28 @@ error_set! {
     #[derive(IntoResponses)]
     Validation := BadRequest || UnprocessableEntity
 
+
     // AUTH
 
     #[derive(IntoResponses)]
-    #[skip(Error,Display,Debug)]
-    Register := Validation || InternalServerError || {
-        /// User Registered Successfully
-        #[response(status = CREATED)]
-        UserCreated(AuthResponse),
-        /// Username is Taken
+    UsernameTaken {
+        /// Username is taken
         #[response(status = CONFLICT)]
         UsernameTaken(ErrorResponse),
     }
 
     #[derive(IntoResponses)]
     #[skip(Error,Display,Debug)]
-    Login := Validation || InternalServerError || Unauthorized || {
-        /// Login Successful
-        #[response(status = OK)]
-        Success(AuthResponse),
-
+    Register := Validation || InternalServerError || UsernameTaken || {
+        /// User registered successfully
+        #[response(status = CREATED)]
+        UserCreated(AuthResponse),
     }
 
     #[derive(IntoResponses)]
     #[skip(Error,Display,Debug)]
-    ChangePassword := Validation || InternalServerError || Unauthorized || {
-        /// Password Changed Successfully
+    Login := Validation || InternalServerError || Unauthorized || {
+        /// Login successful
         #[response(status = OK)]
         Success(AuthResponse),
 
@@ -81,11 +77,27 @@ error_set! {
     #[derive(IntoResponses)]
     #[skip(Error,Display,Debug)]
     GetMe := InternalServerError || Unauthorized || {
-        /// Login Successful
+        /// Login successful
         #[response(status = OK)]
-        AuthorizationSuccess(AuthResponse),
+        Success(AuthResponse),
     }
-
+    #[derive(IntoResponses)]
+    #[skip(Error,Display,Debug)]
+    PatchMe := Validation || InternalServerError || Unauthorized || UsernameTaken || {
+        /// Account updated successfully
+        #[response(status = OK)]
+        Success(AuthResponse),
+    }
+    #[derive(IntoResponses)]
+    #[skip(Error,Display,Debug)]
+    DeleteMe := Validation || InternalServerError || Unauthorized || {
+        /// Account deleted successfully
+        #[response(status = OK)]
+        Success(AuthResponse),
+        /// Cannot delete last administrator account
+        #[response(status = CONFLICT)]
+        LastAdmin(ErrorResponse),
+    }
 
     // OTHER
 }

@@ -36,7 +36,7 @@ pub async fn login(
     State(state): State<AppState>,
     Validated(payload): Validated<AuthRequest>,
 ) -> Result<Json<AuthResponse>, Error> {
-    let user = User::read_by_username(&state.pool, &payload.username).await?;
+    let user = User::get_by_username(&state.pool, &payload.username).await?;
 
     Argon2::default().verify_password(
         payload.password.as_bytes(),
