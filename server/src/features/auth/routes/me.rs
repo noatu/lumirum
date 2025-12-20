@@ -7,9 +7,10 @@ use crate::{
     AppState,
     errors::Error,
     features::auth::{
+        AuthResponse,
+        TAG,
         db::User,
         jwt::Authenticated,
-        types::AuthResponse,
     },
     responses::GetMe,
 };
@@ -19,7 +20,7 @@ use crate::{
     get,
     path = "/me",
     responses(GetMe),
-    tag = super::TAG,
+    tag = TAG,
     security(("jwt" = []))
 )]
 pub async fn get_me(

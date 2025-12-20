@@ -1,5 +1,16 @@
+use garde::Validate;
+use serde::{
+    Deserialize,
+    Serialize,
+};
+use sqlx::{
+    FromRow,
+    Type,
+};
 use utoipa::{
+    IntoResponses,
     Modify,
+    ToSchema,
     openapi::{
         OpenApi,
         security::{
@@ -20,7 +31,6 @@ use crate::AppState;
 
 mod db;
 mod jwt;
-mod types;
 mod routes {
     pub mod login;
     pub mod me;
@@ -29,10 +39,6 @@ mod routes {
 }
 
 pub use jwt::Authenticated;
-pub use types::{
-    AuthResponse,
-    Role,
-};
 
 pub const TAG: &str = "Authentication";
 
@@ -42,6 +48,34 @@ pub fn router() -> OpenApiRouter<AppState> {
         .routes(routes!(routes::login::login))
         .routes(routes!(routes::password::change_password))
         .routes(routes!(routes::me::get_me))
+}
+
+#[derive(Clone, Copy, Type, Serialize, Deserialize, ToSchema)]
+#[serde(rename_all = "snake_case")]
+#[sqlx(type_name = "user_role", rename_all = "snake_case")]
+pub enum Role {
+    Admin,
+    Owner,
+    User,
+}
+
+#[derive(FromRow, Serialize, ToSchema, IntoResponses)]
+#[response(status = OK)]
+pub struct AuthResponse {
+    #[serde(flatten)]
+    pub user: db::User,
+    pub token: String,
+}
+
+#[derive(Deserialize, Validate, ToSchema)]
+struct AuthRequest {
+    /// Username consisting of alphanumeric charactors
+    #[garde(alphanumeric, length(chars, min = 3, max = 25))]
+    #[schema(min_length = 3, max_length = 25, example = "john")]
+    pub username: String,
+    #[garde(length(min = 8))]
+    #[schema(min_length = 8, example = "lumirum!")]
+    pub password: String,
 }
 
 pub struct SecurityAddon;

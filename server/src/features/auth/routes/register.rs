@@ -17,14 +17,12 @@ use crate::{
     errors::Error,
     extractors::Validated,
     features::auth::{
+        AuthRequest,
+        AuthResponse,
+        Role,
         TAG,
         db::User,
         jwt::sign,
-        types::{
-            AuthRequest,
-            AuthResponse,
-            Role,
-        },
     },
     responses::Register,
 };

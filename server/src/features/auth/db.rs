@@ -2,13 +2,19 @@ use chrono::{
     DateTime,
     Utc,
 };
-use serde::Serialize;
-use sqlx::PgPool;
+use serde::{
+    Deserialize,
+    Serialize,
+};
+use sqlx::{
+    PgPool,
+    Type,
+};
 use utoipa::ToSchema;
 
 use crate::errors::Error;
 
-use super::types::Role;
+use super::Role;
 
 #[derive(Serialize, ToSchema)]
 pub struct User {

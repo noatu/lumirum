@@ -29,7 +29,7 @@ use serde::{
 
 use crate::errors::Error;
 
-use super::types::Role;
+use super::Role;
 
 pub fn sign(
     sub: i64,

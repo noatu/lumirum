@@ -12,22 +12,32 @@ use axum::{
     Json,
     extract::State,
 };
+use garde::Validate;
+use serde::Deserialize;
+use utoipa::ToSchema;
 
 use crate::{
     AppState,
     errors::Error,
     extractors::Validated,
     features::auth::{
+        AuthResponse,
         TAG,
         db::User,
         jwt::Authenticated,
-        types::{
-            AuthResponse,
-            ChangePasswordRequest,
-        },
     },
     responses::ChangePassword,
 };
+
+#[derive(Deserialize, Validate, ToSchema)]
+pub struct ChangePasswordRequest {
+    #[garde(skip)]
+    #[schema(example = "lumirum!")]
+    pub old_password: String,
+    #[garde(length(min = 8))]
+    #[schema(min_length = 8, example = "lumirum!changed")]
+    pub new_password: String,
+}
 
 /// Change password
 #[utoipa::path(
