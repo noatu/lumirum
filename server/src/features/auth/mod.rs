@@ -26,7 +26,7 @@ mod login;
 mod register;
 mod types;
 
-pub use jwt::AuthUser;
+pub use jwt::Authenticated;
 pub use types::AuthResponse;
 pub use types::Role;
 

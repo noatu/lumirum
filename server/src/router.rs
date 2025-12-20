@@ -8,13 +8,16 @@ use utoipa_scalar::{
     Servable,
 };
 
-use crate::features::{
-    auth::{
-        self,
-        AuthResponse,
-        SecurityAddon,
+use crate::{
+    features::{
+        auth::{
+            self,
+            AuthResponse,
+            SecurityAddon,
+        },
+        system,
     },
-    system,
+    responses::ErrorResponse,
 };
 
 #[derive(OpenApi)]
@@ -25,7 +28,7 @@ use crate::features::{
         version = env!("CARGO_PKG_VERSION"),
         description = "LumiRum OpenAPI Specification",
     ),
-    components(schemas(AuthResponse))
+    components(schemas(AuthResponse, ErrorResponse))
 )]
 struct ApiDoc;
 

@@ -35,19 +35,19 @@ pub struct AuthResponse {
 pub struct AuthRequest {
     /// Username consisting of alphanumeric charactors
     #[garde(alphanumeric, length(chars, min = 3, max = 25))]
-    #[schema(min_length = 3, max_length = 25, example = "john42")]
+    #[schema(min_length = 3, max_length = 25, example = "john")]
     pub username: String,
     #[garde(length(min = 8))]
-    #[schema(min_length = 8, example = "password!")]
+    #[schema(min_length = 8, example = "lumirum!")]
     pub password: String,
 }
 
 #[derive(Deserialize, Validate, ToSchema)]
 pub struct ChangePasswordRequest {
     #[garde(skip)]
-    #[schema(example = "password!")]
+    #[schema(example = "lumirum!")]
     pub old_password: String,
     #[garde(length(min = 8))]
-    #[schema(min_length = 8, example = "better password")]
+    #[schema(min_length = 8, example = "lumirum!changed")]
     pub new_password: String,
 }

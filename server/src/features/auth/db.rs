@@ -21,12 +21,6 @@ pub struct User {
 }
 
 impl User {
-    pub async fn count(pool: &PgPool) -> Result<i64, Error> {
-        Ok(sqlx::query_scalar!(r#"SELECT COUNT(*) as "c!" FROM users"#)
-            .fetch_one(pool)
-            .await?)
-    }
-
     pub async fn read_by_id(pool: &PgPool, id: i64) -> Result<Self, Error> {
         sqlx::query_as!(
         Self,

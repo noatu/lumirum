@@ -20,7 +20,7 @@ use crate::{
 
 use super::{
     db::User,
-    jwt::AuthUser,
+    jwt::Authenticated,
 
     types::{
         AuthResponse,
@@ -38,14 +38,14 @@ use super::{
 )]
 pub async fn change_password(
     State(state): State<crate::AppState>,
-    auth_user: AuthUser,
+    user: Authenticated,
     Validated(payload): Validated<ChangePasswordRequest>,
 ) -> Result<Json<AuthResponse>, Error> {
-    let mut user = User::read_by_id(&state.pool, auth_user.id).await?;
+    let mut db_user = User::read_by_id(&state.pool, user.id).await?;
 
     Argon2::default().verify_password(
         payload.old_password.as_bytes(),
-        &PasswordHash::new(&user.password_hash)?,
+        &PasswordHash::new(&db_user.password_hash)?,
     )?;
 
     let password_hash = Argon2::default()
@@ -55,10 +55,10 @@ pub async fn change_password(
         )?
         .to_string();
 
-    user.update_password(&state.pool, password_hash).await?;
+    db_user.update_password(&state.pool, password_hash).await?;
 
     Ok(Json(AuthResponse {
-        user,
-        token: auth_user.token,
+        user: db_user,
+        token: user.token,
     }))
 }

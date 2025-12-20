@@ -7,7 +7,7 @@ use crate::errors::Error;
 
 use super::{
     db::User,
-    jwt::AuthUser,
+    jwt::Authenticated,
     types::AuthResponse,
 };
 
@@ -21,12 +21,10 @@ use super::{
 )]
 pub async fn get_me(
     State(state): State<crate::AppState>,
-    auth_user: AuthUser,
+    user: Authenticated,
 ) -> Result<Json<AuthResponse>, Error> {
-    let user = User::read_by_id(&state.pool, auth_user.id).await?;
-
     Ok(Json(AuthResponse {
-        user,
-        token: auth_user.token,
+        user: User::read_by_id(&state.pool, user.id).await?,
+        token: user.token,
     }))
 }

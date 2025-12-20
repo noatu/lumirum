@@ -43,12 +43,6 @@ pub async fn register(
         return Err(Error::UsernameTaken);
     }
 
-    let role = if User::count(&state.pool).await? == 0 {
-        Role::Admin
-    } else {
-        Role::User
-    };
-
     let password_hash = Argon2::default()
         .hash_password(
             payload.password.as_bytes(),
@@ -56,7 +50,7 @@ pub async fn register(
         )?
         .to_string();
 
-    let user = User::create(&state.pool, payload.username, password_hash, role).await?;
+    let user = User::create(&state.pool, payload.username, password_hash, Role::Owner).await?;
     let token = sign(user.id, &user.username, user.role, &state.jwt_secret)?;
     Ok((StatusCode::CREATED, Json(AuthResponse { user, token })))
 }

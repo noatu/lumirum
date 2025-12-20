@@ -64,14 +64,14 @@ struct Claims {
     pub exp: u64,
 }
 
-pub struct AuthUser {
+pub struct Authenticated {
     pub id: i64,
     pub username: String,
     pub role: Role,
     pub token: String,
 }
 
-impl FromRequestParts<crate::AppState> for AuthUser {
+impl FromRequestParts<crate::AppState> for Authenticated {
     type Rejection = Error;
 
     async fn from_request_parts(
