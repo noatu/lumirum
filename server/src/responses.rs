@@ -18,47 +18,40 @@ error_set! {
     }
 
     #[derive(IntoResponses)]
-    enum InternalError {
+    InternalServerError {
         /// Internal Server Error
         #[response(status = INTERNAL_SERVER_ERROR)]
-        InternalError(ErrorResponse),
+        InternalServerError(ErrorResponse),
     }
-
     #[derive(IntoResponses)]
-    enum Validation {
-        /// Invalid JSON Structure
+    BadRequest {
+        /// Invalid JSON Structure or Invalid Request
         #[response(status = BAD_REQUEST)]
-        InvalidJson(ErrorResponse),
+        BadRequest(ErrorResponse),
+    }
+    #[derive(IntoResponses)]
+    UnprocessableEntity {
         /// Data Validation Failed
         #[response(status = UNPROCESSABLE_ENTITY)]
-        InvalidData(ErrorResponse),
-    }
-
-    #[derive(IntoResponses)]
-    enum WrongCredentials {
-        /// Credentials are Wrong
-        #[response(status = UNAUTHORIZED)]
-        WrongCredentials(ErrorResponse),
+        UnprocessableEntity(ErrorResponse),
     }
     #[derive(IntoResponses)]
-    enum Jwt {
-        /// Credentials are Missing
+    Unauthorized {
+        /// Credentials are Invalid
         #[response(status = UNAUTHORIZED)]
-        MissingCredentials(ErrorResponse),
-        /// Token is Invalid
-        #[response(status = UNAUTHORIZED)]
-        InvalidToken(ErrorResponse),
-        /// Token has Expired
-        #[response(status = UNAUTHORIZED)]
-        TokenExpired(ErrorResponse),
+        Unauthorized(ErrorResponse),
     }
 
+    // EXTRACTORS
+
+    #[derive(IntoResponses)]
+    Validation := BadRequest || UnprocessableEntity
 
     // AUTH
 
     #[derive(IntoResponses)]
     #[skip(Error,Display,Debug)]
-    Register := Validation || InternalError || {
+    Register := Validation || InternalServerError || {
         /// User Registered Successfully
         #[response(status = CREATED)]
         UserCreated(AuthResponse),
@@ -69,7 +62,7 @@ error_set! {
 
     #[derive(IntoResponses)]
     #[skip(Error,Display,Debug)]
-    Login := Validation || InternalError ||  WrongCredentials || {
+    Login := Validation || InternalServerError || Unauthorized || {
         /// Login Successful
         #[response(status = OK)]
         Success(AuthResponse),
@@ -78,7 +71,7 @@ error_set! {
 
     #[derive(IntoResponses)]
     #[skip(Error,Display,Debug)]
-    ChangePassword := Validation || InternalError ||  WrongCredentials ||  Jwt || {
+    ChangePassword := Validation || InternalServerError || Unauthorized || {
         /// Password Changed Successfully
         #[response(status = OK)]
         Success(AuthResponse),
@@ -87,7 +80,7 @@ error_set! {
 
     #[derive(IntoResponses)]
     #[skip(Error,Display,Debug)]
-    GetMe := InternalError || Jwt || {
+    GetMe := InternalServerError || Unauthorized || {
         /// Login Successful
         #[response(status = OK)]
         AuthorizationSuccess(AuthResponse),
