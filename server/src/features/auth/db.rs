@@ -8,7 +8,7 @@ use utoipa::ToSchema;
 
 use crate::errors::Error;
 
-use super::Role;
+use super::types::Role;
 
 #[derive(Serialize, ToSchema)]
 pub struct User {

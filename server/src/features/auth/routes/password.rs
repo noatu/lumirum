@@ -14,30 +14,31 @@ use axum::{
 };
 
 use crate::{
+    AppState,
     errors::Error,
     extractors::Validated,
-};
-
-use super::{
-    db::User,
-    jwt::Authenticated,
-
-    types::{
-        AuthResponse,
-        ChangePasswordRequest,
+    features::auth::{
+        TAG,
+        db::User,
+        jwt::Authenticated,
+        types::{
+            AuthResponse,
+            ChangePasswordRequest,
+        },
     },
+    responses::ChangePassword,
 };
 
 /// Change password
 #[utoipa::path(
     post,
-    path = "/change-password",
+    path = "/password",
     request_body = ChangePasswordRequest,
-    responses(crate::responses::ChangePassword),
-    tag = super::TAG
+    responses(ChangePassword),
+    tag = TAG
 )]
 pub async fn change_password(
-    State(state): State<crate::AppState>,
+    State(state): State<AppState>,
     user: Authenticated,
     Validated(payload): Validated<ChangePasswordRequest>,
 ) -> Result<Json<AuthResponse>, Error> {

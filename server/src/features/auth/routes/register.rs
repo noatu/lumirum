@@ -13,18 +13,20 @@ use axum::{
 };
 
 use crate::{
+    AppState,
     errors::Error,
     extractors::Validated,
-};
-
-use super::{
-    db::User,
-    jwt::sign,
-    types::{
-        AuthRequest,
-        AuthResponse,
-        Role,
+    features::auth::{
+        TAG,
+        db::User,
+        jwt::sign,
+        types::{
+            AuthRequest,
+            AuthResponse,
+            Role,
+        },
     },
+    responses::Register,
 };
 
 /// Register a new user
@@ -32,11 +34,11 @@ use super::{
     post,
     path = "/register",
     request_body = AuthRequest,
-    responses(crate::responses::Register),
-    tag = super::TAG
+    responses(Register),
+    tag = TAG
 )]
 pub async fn register(
-    State(state): State<crate::AppState>,
+    State(state): State<AppState>,
     Validated(payload): Validated<AuthRequest>,
 ) -> Result<(StatusCode, Json<AuthResponse>), Error> {
     if User::exits(&state.pool, &payload.username).await? {

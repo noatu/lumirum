@@ -11,17 +11,19 @@ use axum::{
 };
 
 use crate::{
+    AppState,
     errors::Error,
     extractors::Validated,
-};
-
-use super::{
-    db::User,
-    jwt::sign,
-    types::{
-        AuthRequest,
-        AuthResponse,
+    features::auth::{
+        TAG,
+        db::User,
+        jwt::sign,
+        types::{
+            AuthRequest,
+            AuthResponse,
+        },
     },
+    responses::Login,
 };
 
 /// Log into an existing user
@@ -29,11 +31,11 @@ use super::{
     post,
     path = "/login",
     request_body = AuthRequest,
-    responses(crate::responses::Login),
-    tag = super::TAG
+    responses(Login),
+    tag = TAG
 )]
 pub async fn login(
-    State(state): State<crate::AppState>,
+    State(state): State<AppState>,
     Validated(payload): Validated<AuthRequest>,
 ) -> Result<Json<AuthResponse>, Error> {
     let user = User::read_by_username(&state.pool, &payload.username).await?;

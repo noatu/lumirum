@@ -18,26 +18,30 @@ use utoipa_axum::{
 
 use crate::AppState;
 
-mod change_password;
 mod db;
-mod get_me;
 mod jwt;
-mod login;
-mod register;
 mod types;
+mod routes {
+    pub mod login;
+    pub mod me;
+    pub mod password;
+    pub mod register;
+}
 
 pub use jwt::Authenticated;
-pub use types::AuthResponse;
-pub use types::Role;
+pub use types::{
+    AuthResponse,
+    Role,
+};
 
 pub const TAG: &str = "Authentication";
 
 pub fn router() -> OpenApiRouter<AppState> {
     OpenApiRouter::new()
-        .routes(routes!(register::register))
-        .routes(routes!(login::login))
-        .routes(routes!(change_password::change_password))
-        .routes(routes!(get_me::get_me))
+        .routes(routes!(routes::register::register))
+        .routes(routes!(routes::login::login))
+        .routes(routes!(routes::password::change_password))
+        .routes(routes!(routes::me::get_me))
 }
 
 pub struct SecurityAddon;

@@ -3,24 +3,27 @@ use axum::{
     extract::State,
 };
 
-use crate::errors::Error;
-
-use super::{
-    db::User,
-    jwt::Authenticated,
-    types::AuthResponse,
+use crate::{
+    AppState,
+    errors::Error,
+    features::auth::{
+        db::User,
+        jwt::Authenticated,
+        types::AuthResponse,
+    },
+    responses::GetMe,
 };
 
 /// Get current user information
 #[utoipa::path(
     get,
     path = "/me",
-    responses(crate::responses::GetMe),
+    responses(GetMe),
     tag = super::TAG,
     security(("jwt" = []))
 )]
 pub async fn get_me(
-    State(state): State<crate::AppState>,
+    State(state): State<AppState>,
     user: Authenticated,
 ) -> Result<Json<AuthResponse>, Error> {
     Ok(Json(AuthResponse {
