@@ -53,14 +53,15 @@ pub async fn get(
 }
 
 #[derive(Deserialize, Validate, ToSchema)]
+#[schema(as = ChangeAccountRequest)]
 pub struct ChangeRequest {
-    #[garde(length(min = 1))]
+    #[garde(length(chars, min = 1))]
     #[schema(example = "lumirum!")]
     pub password: String,
     #[garde(alphanumeric, length(chars, min = 3, max = 25))]
     #[schema(min_length = 3, max_length = 25, example = "johnchanged")]
     pub new_username: Option<String>,
-    #[garde(length(min = 8))]
+    #[garde(length(chars, min = 8))]
     #[schema(min_length = 8, example = "lumirum!changed")]
     pub new_password: Option<String>,
 }
@@ -80,7 +81,7 @@ pub async fn patch(
     Validated(payload): Validated<ChangeRequest>,
 ) -> Result<Json<AuthResponse>, Error> {
     let token = user.token;
-    let new_password_hash = match payload.new_password {
+    let new_password_hash = match &payload.new_password {
         Some(pass) => Some(
             Argon2::default()
                 .hash_password(pass.as_bytes(), &SaltString::generate(&mut OsRng))?
@@ -90,6 +91,7 @@ pub async fn patch(
         None => None,
     };
 
+    let payload = payload.into_inner();
     let user = User::update(&state.pool, user.id, |user| {
         // FIXME: performance hit, hashing inside a transaction
         Argon2::default().verify_password(
@@ -122,7 +124,7 @@ pub async fn patch(
 
 #[derive(Deserialize, Validate, ToSchema)]
 pub struct DeleteRequest {
-    #[garde(length(min = 1))]
+    #[garde(length(chars, min = 1))]
     #[schema(example = "lumirum!")]
     pub password: String,
 }
@@ -149,5 +151,5 @@ pub async fn delete(
     )?;
 
     User::delete(&state.pool, user.id).await?;
-    Ok(StatusCode::OK)
+    Ok(StatusCode::NO_CONTENT)
 }

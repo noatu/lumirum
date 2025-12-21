@@ -31,12 +31,7 @@ use crate::errors::Error;
 
 use super::Role;
 
-pub fn sign(
-    sub: i64,
-    username: &str,
-    role: Role,
-    secret: &str,
-) -> Result<String, jsonwebtoken::errors::Error> {
+pub fn sign(sub: i64, role: Role, secret: &str) -> Result<String, jsonwebtoken::errors::Error> {
     #[allow(clippy::expect_used)]
     let expiration = Utc::now()
         .checked_add_signed(Duration::hours(24))
@@ -44,7 +39,6 @@ pub fn sign(
         .timestamp();
     let claims = Claims {
         sub,
-        username: username.into(),
         role,
         exp: expiration.cast_unsigned(),
     };
@@ -59,16 +53,15 @@ pub fn sign(
 #[derive(Serialize, Deserialize)]
 struct Claims {
     pub sub: i64,
-    pub username: String,
     pub role: Role,
     pub exp: u64,
 }
 
 pub struct Authenticated {
     pub id: i64,
-    pub username: String,
     pub role: Role,
     pub token: String,
+    // pub expires: DateTime<Utc>,
 }
 
 impl FromRequestParts<crate::AppState> for Authenticated {
@@ -97,7 +90,6 @@ impl FromRequestParts<crate::AppState> for Authenticated {
 
         Ok(Self {
             id: token_data.claims.sub,
-            username: token_data.claims.username,
             role: token_data.claims.role,
             token: bearer.token().to_owned(),
         })

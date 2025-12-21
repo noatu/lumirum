@@ -26,6 +26,8 @@ pub enum Error {
 
     #[error("credentials are wrong")]
     UserNotFound, // NOTE: IntoStaticStr leaks this detail
+    #[error("profile does not exist")]
+    ProfileNotFound,
 
     #[error("credentials are wrong")]
     WrongCredentials,
@@ -35,6 +37,9 @@ pub enum Error {
     InvalidToken,
     #[error("token has expired")]
     TokenExpired,
+
+    #[error("cannot modify a parent profile")]
+    CantModifyParentProfile,
 
     #[error(transparent)]
     InvalidData(#[from] garde::Report),
@@ -48,6 +53,8 @@ pub enum Error {
     PasswordHash(argon2::password_hash::Error),
     #[error("json web token: {0}")]
     Jwt(#[from] jsonwebtoken::errors::Error),
+    #[error("data corrupted: {0}")]
+    DataCorruption(String),
 }
 
 impl From<&Error> for StatusCode {
@@ -65,11 +72,15 @@ impl From<&Error> for StatusCode {
             | Error::InvalidToken
             | Error::TokenExpired => Self::UNAUTHORIZED,
 
-            Error::InvalidData(_) => Self::UNPROCESSABLE_ENTITY,
+            Error::CantModifyParentProfile => Self::FORBIDDEN,
+            Error::ProfileNotFound => Self::NOT_FOUND,
             Error::InvalidJson(_) => Self::BAD_REQUEST,
-            Error::Database(_) | Error::PasswordHash(_) | Error::Jwt(_) => {
-                Self::INTERNAL_SERVER_ERROR
-            }
+            Error::InvalidData(_) => Self::UNPROCESSABLE_ENTITY,
+
+            Error::Database(_)
+            | Error::PasswordHash(_)
+            | Error::Jwt(_)
+            | Error::DataCorruption(_) => Self::INTERNAL_SERVER_ERROR,
         }
     }
 }

@@ -28,8 +28,8 @@ CREATE TABLE profiles (
     name TEXT NOT NULL CHECK (length(name) > 0 AND length(name) <= 200),
 
     -- Location, for solar cycle calculation
-    latitude DECIMAL(9, 6) CHECK (latitude BETWEEN -90 AND 90),
-    longitude DECIMAL(9, 6) CHECK (longitude BETWEEN -180 AND 180),
+    latitude DOUBLE PRECISION CHECK (latitude BETWEEN -90 AND 90),
+    longitude DOUBLE PRECISION CHECK (longitude BETWEEN -180 AND 180),
 
     timezone TEXT NOT NULL DEFAULT 'UTC', -- IANA: 'Europe/Kyiv'
     -- Local time in user's timezone

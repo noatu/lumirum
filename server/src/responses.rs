@@ -1,5 +1,8 @@
 #![allow(unused)]
-use crate::features::auth::AuthResponse;
+use crate::features::{
+    auth::AuthResponse,
+    profiles::Profile,
+};
 use error_set::error_set;
 use utoipa::{
     IntoResponses,
@@ -92,12 +95,67 @@ error_set! {
     #[skip(Error,Display,Debug)]
     DeleteMe := Validation || InternalServerError || Unauthorized || {
         /// Account deleted successfully
-        #[response(status = OK)]
-        Success(AuthResponse),
+        #[response(status = NO_CONTENT)]
+        Success,
         /// Cannot delete last administrator account
         #[response(status = CONFLICT)]
         LastAdmin(ErrorResponse),
     }
 
-    // OTHER
+
+    // PROFILES
+
+    #[derive(IntoResponses)]
+    ProfileNameTaken {
+        /// Profile name is taken
+        #[response(status = CONFLICT)]
+        ProfileNameTaken(ErrorResponse),
+    }
+
+    #[derive(IntoResponses)]
+    #[skip(Error,Display,Debug)]
+    GetProfile := InternalServerError || Unauthorized || {
+        /// Get profile information
+        #[response(status = OK)]
+        Success(AuthResponse),
+        /// Profile does not exist
+        #[response(status = NOT_FOUND)]
+        NotFound(ErrorResponse),
+    }
+    #[derive(IntoResponses)]
+    #[skip(Error,Display,Debug)]
+    GetProfiles := InternalServerError || Unauthorized || {
+        /// Get all profiles information
+        #[response(status = OK)]
+        Success(AuthResponse),
+    }
+    #[derive(IntoResponses)]
+    #[skip(Error,Display,Debug)]
+    PostProfile := Validation || InternalServerError || Unauthorized || ProfileNameTaken || {
+        /// Profile created successfully
+        #[response(status = CREATED)]
+        Success(Profile),
+    }
+    #[derive(IntoResponses)]
+    #[skip(Error,Display,Debug)]
+    PutProfile := Validation || InternalServerError || Unauthorized || ProfileNameTaken || {
+        /// Profile updated successfully
+        #[response(status = OK)]
+        Success(Profile),
+        /// Cannot update a parent profile
+        #[response(status = FORBIDDEN)]
+        CantParentProfile(ErrorResponse)
+
+    }
+    #[derive(IntoResponses)]
+    #[skip(Error,Display,Debug)]
+    DeleteProfile := Validation || InternalServerError || Unauthorized || {
+        /// Profile deleted successfully
+        #[response(status = NO_CONTENT)]
+        Success,
+        /// Cannot delete a parent profile
+        #[response(status = FORBIDDEN)]
+        CantParentProfile(ErrorResponse)
+    }
+
 }

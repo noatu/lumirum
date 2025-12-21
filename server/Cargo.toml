@@ -1,6 +1,6 @@
 [package]
 name = "lumirum-server"
-version = "0.1.2"
+version = "0.2.0"
 edition = "2024"
 publish = false
 
@@ -23,7 +23,7 @@ utoipa-scalar = { version = "0.3", features = ["axum"] }
 jsonwebtoken = { version = "10.2", features = ["rust_crypto"] }
 
 thiserror = "2.0"
-garde = { version = "0.22", features = ["derive", "email"] }
+garde = { version = "0.22", features = ["derive"] }
 error_set = "0.9"
 strum = { version = "0.27", features = ["derive"] }
 

@@ -5,12 +5,16 @@ use axum::{
         Request,
     },
 };
-use garde::Validate;
+use garde::{
+    Unvalidated,
+    Valid,
+    Validate,
+};
 use serde::de::DeserializeOwned;
 
 use crate::errors::Error;
 
-pub struct Validated<T>(pub T);
+pub struct Validated<T>(pub Valid<T>);
 
 impl<S, T> FromRequest<S> for Validated<T>
 where
@@ -23,8 +27,6 @@ where
     async fn from_request(req: Request, state: &S) -> Result<Self, Self::Rejection> {
         let Json(data) = Json::<T>::from_request(req, state).await?;
 
-        data.validate()?;
-
-        Ok(Self(data))
+        Ok(Self(Unvalidated::new(data).validate()?))
     }
 }
