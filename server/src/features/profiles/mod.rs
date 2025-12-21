@@ -55,11 +55,11 @@ pub async fn get(
 ) -> Result<Json<Profile>, Error> {
     let profile = Profile::get_by_id(&state.pool, id).await?;
 
-    if profile.owner_id != user.id || Role::User(profile.owner_id) != user.role {
-        return Err(Error::ProfileNotFound);
+    if profile.owner_id == user.id || Role::User(profile.owner_id) == user.role {
+        return Ok(Json(profile));
     }
 
-    Ok(Json(profile))
+    Err(Error::ProfileNotFound)
 }
 
 /// List all profiles
