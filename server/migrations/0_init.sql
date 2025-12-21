@@ -57,7 +57,6 @@ CREATE INDEX idx_profiles_owner_id ON profiles(owner_id);
 
 CREATE TABLE devices (
     id BIGSERIAL PRIMARY KEY,
-    mac_address TEXT NOT NULL,
     name TEXT NOT NULL CHECK (length(name) > 0 AND length(name) <= 200),
     secret_key TEXT NOT NULL, -- device auth token
 
@@ -70,7 +69,6 @@ CREATE TABLE devices (
 
     created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
 
-    CONSTRAINT devices_owner_id_mac_address_key UNIQUE (owner_id, mac_address),
     CONSTRAINT devices_owner_id_name_key UNIQUE (owner_id, name)
 );
 

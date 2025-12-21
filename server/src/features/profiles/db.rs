@@ -47,21 +47,29 @@ pub struct CreateProfile {
     #[garde(length(chars, min = 1))]
     #[schema(min_length = 1, example = "Living Room")]
     pub name: String,
+
     pub latitude: Option<f64>,
     pub longitude: Option<f64>,
+
     #[schema(default = "UTC", example = "Europe/Kyiv")]
     pub timezone: String,
+
     #[schema(value_type = String, example = "22:00:00")]
     pub sleep_start: NaiveTime,
+
     #[schema(value_type = String, example = "07:00:00")]
     pub sleep_end: NaiveTime,
+
     pub night_mode_enabled: bool,
+
     #[garde(range(min = 1800, max = 10000))]
     #[schema(default = 2000, minimum = 1800, maximum = 10000)]
     pub min_color_temp: i32,
+
     #[garde(range(min = self.min_color_temp, max = 10000))]
     #[schema(default = 6500, minimum = 1800, maximum = 10000)]
     pub max_color_temp: i32,
+
     #[schema(default = 300)]
     pub motion_timeout_seconds: i32,
 }
@@ -81,11 +89,7 @@ impl Profile {
                 min_color_temp, max_color_temp, motion_timeout_seconds
             )
             VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11)
-            RETURNING
-                id, owner_id, name, latitude, longitude, timezone,
-                sleep_start, sleep_end, night_mode_enabled,
-                min_color_temp, max_color_temp, motion_timeout_seconds,
-                created_at
+            RETURNING *
             "#,
             owner_id,
             data.name,
@@ -106,34 +110,16 @@ impl Profile {
     }
 
     pub async fn get_by_id(pool: &PgPool, id: i64) -> Result<Self, Error> {
-        sqlx::query_as!(
-            Self,
-            r#"SELECT
-                id, owner_id, name, latitude, longitude, timezone,
-                sleep_start, sleep_end, night_mode_enabled,
-                min_color_temp, max_color_temp, motion_timeout_seconds,
-                created_at
-               FROM profiles WHERE id = $1"#,
-            id
-        )
-        .fetch_optional(pool)
-        .await?
-        .ok_or(Error::ProfileNotFound)
+        sqlx::query_as!(Self, "SELECT * FROM profiles WHERE id = $1", id)
+            .fetch_optional(pool)
+            .await?
+            .ok_or(Error::ProfileNotFound)
     }
 
     pub async fn list_by_owner(pool: &PgPool, owner_id: i64) -> Result<Vec<Self>, Error> {
         let profiles = sqlx::query_as!(
             Self,
-            r#"
-            SELECT
-                id, owner_id, name, latitude, longitude, timezone,
-                sleep_start, sleep_end, night_mode_enabled,
-                min_color_temp, max_color_temp, motion_timeout_seconds,
-                created_at
-            FROM profiles
-            WHERE owner_id = $1
-            ORDER BY name ASC
-            "#,
+            "SELECT * FROM profiles WHERE owner_id = $1 ORDER BY name ASC",
             owner_id
         )
         .fetch_all(pool)
@@ -143,19 +129,10 @@ impl Profile {
     }
 
     async fn get_by_id_for_update(conn: &mut sqlx::PgConnection, id: i64) -> Result<Self, Error> {
-        sqlx::query_as!(
-            Self,
-            r#"SELECT
-                id, owner_id, name, latitude, longitude, timezone,
-                sleep_start, sleep_end, night_mode_enabled,
-                min_color_temp, max_color_temp, motion_timeout_seconds,
-                created_at
-               FROM profiles WHERE id = $1 FOR UPDATE"#,
-            id
-        )
-        .fetch_optional(conn)
-        .await?
-        .ok_or(Error::ProfileNotFound)
+        sqlx::query_as!(Self, "SELECT * FROM profiles WHERE id = $1 FOR UPDATE", id)
+            .fetch_optional(conn)
+            .await?
+            .ok_or(Error::ProfileNotFound)
     }
 
     pub async fn update<F>(pool: &PgPool, id: i64, func: F) -> Result<Self, Error>
@@ -189,11 +166,7 @@ impl Profile {
                 max_color_temp = $9,
                 motion_timeout_seconds = $10
             WHERE id = $11
-            RETURNING
-                id, owner_id, name, latitude, longitude, timezone,
-                sleep_start, sleep_end, night_mode_enabled,
-                min_color_temp, max_color_temp, motion_timeout_seconds,
-                created_at
+            RETURNING *
             "#,
             profile.name,
             profile.latitude,

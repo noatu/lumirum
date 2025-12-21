@@ -88,6 +88,24 @@ impl From<User> for DbUser {
 }
 
 impl User {
+    pub async fn is_child(pool: &PgPool, child_id: i64, parent_id: i64) -> Result<bool, Error> {
+        Ok(sqlx::query_scalar!(
+            "SELECT 1 FROM users WHERE id = $1 AND parent_id = $2",
+            child_id,
+            parent_id
+        )
+        .fetch_optional(pool)
+        .await?
+        .is_some())
+    }
+
+    pub async fn get_children(pool: &PgPool, parent_id: i64) -> Result<Vec<i64>, Error> {
+        let result = sqlx::query_scalar!("SELECT id FROM users WHERE parent_id = $1", parent_id)
+            .fetch_all(pool)
+            .await?;
+        Ok(result)
+    }
+
     pub async fn create(
         pool: &PgPool,
         username: &str,

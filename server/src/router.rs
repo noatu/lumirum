@@ -15,6 +15,10 @@ use crate::{
             AuthResponse,
             SecurityAddon,
         },
+        devices::{
+            self,
+            Device,
+        },
         profiles::{
             self,
             Profile,
@@ -32,7 +36,7 @@ use crate::{
         version = env!("CARGO_PKG_VERSION"),
         description = "LumiRum OpenAPI Specification",
     ),
-    components(schemas(ErrorResponse, AuthResponse, Profile))
+    components(schemas(ErrorResponse, AuthResponse, Profile, Device))
 )]
 struct ApiDoc;
 
@@ -41,6 +45,7 @@ pub fn router() -> Router<crate::AppState> {
         .merge(system::router())
         .nest("/auth", auth::router()) // TODO: manual user creation
         .nest("/profiles", profiles::router())
+        .nest("/devices", devices::router())
         .split_for_parts();
 
     tracing::info!("Scalar is available at /");

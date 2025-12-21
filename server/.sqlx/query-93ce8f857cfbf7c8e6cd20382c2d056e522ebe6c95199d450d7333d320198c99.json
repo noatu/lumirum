@@ -1,11 +1,11 @@
 {
   "db_name": "PostgreSQL",
-  "query": "SELECT role AS \"role: Role\" FROM users WHERE id = $1 FOR UPDATE",
+  "query": "SELECT role AS \"role: DbRole\" FROM users WHERE id = $1 FOR UPDATE",
   "describe": {
     "columns": [
       {
         "ordinal": 0,
-        "name": "role: Role",
+        "name": "role: DbRole",
         "type_info": {
           "Custom": {
             "name": "user_role",
@@ -29,5 +29,5 @@
       false
     ]
   },
-  "hash": "b1d68a6458a990965d68e2759ac3a827f41fe6cd1b7cd37bc1747bdbe775e2be"
+  "hash": "93ce8f857cfbf7c8e6cd20382c2d056e522ebe6c95199d450d7333d320198c99"
 }

@@ -1,0 +1,76 @@
+{
+  "db_name": "PostgreSQL",
+  "query": "UPDATE devices SET\n                name = $1,\n                secret_key = $2,\n                profile_id = $3,\n                is_public = $4,\n                firmware_version = $5,\n                last_seen = $6\n             WHERE id = $7 RETURNING *",
+  "describe": {
+    "columns": [
+      {
+        "ordinal": 0,
+        "name": "id",
+        "type_info": "Int8"
+      },
+      {
+        "ordinal": 1,
+        "name": "name",
+        "type_info": "Text"
+      },
+      {
+        "ordinal": 2,
+        "name": "secret_key",
+        "type_info": "Text"
+      },
+      {
+        "ordinal": 3,
+        "name": "profile_id",
+        "type_info": "Int8"
+      },
+      {
+        "ordinal": 4,
+        "name": "owner_id",
+        "type_info": "Int8"
+      },
+      {
+        "ordinal": 5,
+        "name": "is_public",
+        "type_info": "Bool"
+      },
+      {
+        "ordinal": 6,
+        "name": "firmware_version",
+        "type_info": "Text"
+      },
+      {
+        "ordinal": 7,
+        "name": "last_seen",
+        "type_info": "Timestamptz"
+      },
+      {
+        "ordinal": 8,
+        "name": "created_at",
+        "type_info": "Timestamptz"
+      }
+    ],
+    "parameters": {
+      "Left": [
+        "Text",
+        "Text",
+        "Int8",
+        "Bool",
+        "Text",
+        "Timestamptz",
+        "Int8"
+      ]
+    },
+    "nullable": [
+      false,
+      false,
+      false,
+      true,
+      false,
+      false,
+      true,
+      true,
+      false
+    ]
+  },
+  "hash": "468771a72e46dc717eba2363b87afa5203b841b8d8cd862bfcc8bc8339ccb424"
+}

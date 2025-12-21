@@ -1,6 +1,6 @@
 {
   "db_name": "PostgreSQL",
-  "query": "UPDATE users \n               SET username = $1, password_hash = $2, role = $3, parent_id = $4\n               WHERE id = $5\n               RETURNING id, username, password_hash, role AS \"role: Role\", \n                         parent_id, created_at",
+  "query": "SELECT id, username, password_hash, role AS \"role: DbRole\",\n                      parent_id, created_at\n               FROM users WHERE id = $1",
   "describe": {
     "columns": [
       {
@@ -20,7 +20,7 @@
       },
       {
         "ordinal": 3,
-        "name": "role: Role",
+        "name": "role: DbRole",
         "type_info": {
           "Custom": {
             "name": "user_role",
@@ -47,21 +47,6 @@
     ],
     "parameters": {
       "Left": [
-        "Text",
-        "Text",
-        {
-          "Custom": {
-            "name": "user_role",
-            "kind": {
-              "Enum": [
-                "admin",
-                "owner",
-                "user"
-              ]
-            }
-          }
-        },
-        "Int8",
         "Int8"
       ]
     },
@@ -74,5 +59,5 @@
       false
     ]
   },
-  "hash": "3ad0433fc105dfbbcad7dcc7b8ad14835a707a192ab182286a04c19bcef33140"
+  "hash": "ed46d5228c8df42dd51860e1f50130cb7433795b70a220e004ef79743ee42875"
 }

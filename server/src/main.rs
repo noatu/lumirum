@@ -14,6 +14,7 @@ mod responses;
 mod router;
 mod features {
     pub mod auth;
+    pub mod devices;
     pub mod profiles;
     pub mod system;
 }

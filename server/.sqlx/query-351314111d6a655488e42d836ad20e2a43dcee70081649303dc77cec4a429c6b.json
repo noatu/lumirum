@@ -1,0 +1,70 @@
+{
+  "db_name": "PostgreSQL",
+  "query": "SELECT * FROM devices WHERE owner_id = $1\n               OR owner_id IN (\n                   SELECT id \n                   FROM users \n                   WHERE parent_id = $1\n               )\n            ORDER BY created_at DESC",
+  "describe": {
+    "columns": [
+      {
+        "ordinal": 0,
+        "name": "id",
+        "type_info": "Int8"
+      },
+      {
+        "ordinal": 1,
+        "name": "name",
+        "type_info": "Text"
+      },
+      {
+        "ordinal": 2,
+        "name": "secret_key",
+        "type_info": "Text"
+      },
+      {
+        "ordinal": 3,
+        "name": "profile_id",
+        "type_info": "Int8"
+      },
+      {
+        "ordinal": 4,
+        "name": "owner_id",
+        "type_info": "Int8"
+      },
+      {
+        "ordinal": 5,
+        "name": "is_public",
+        "type_info": "Bool"
+      },
+      {
+        "ordinal": 6,
+        "name": "firmware_version",
+        "type_info": "Text"
+      },
+      {
+        "ordinal": 7,
+        "name": "last_seen",
+        "type_info": "Timestamptz"
+      },
+      {
+        "ordinal": 8,
+        "name": "created_at",
+        "type_info": "Timestamptz"
+      }
+    ],
+    "parameters": {
+      "Left": [
+        "Int8"
+      ]
+    },
+    "nullable": [
+      false,
+      false,
+      false,
+      true,
+      false,
+      false,
+      true,
+      true,
+      false
+    ]
+  },
+  "hash": "351314111d6a655488e42d836ad20e2a43dcee70081649303dc77cec4a429c6b"
+}

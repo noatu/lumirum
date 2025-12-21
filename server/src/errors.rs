@@ -17,8 +17,6 @@ pub enum Error {
     UsernameTaken,
     #[error("profile name is already in use")]
     ProfileNameTaken,
-    #[error("device MAC address is already registered")]
-    DeviceMACTaken,
     #[error("device name is already in use")]
     DeviceNameTaken,
     #[error("cannot delete last administrator account")]
@@ -28,6 +26,8 @@ pub enum Error {
     UserNotFound, // NOTE: IntoStaticStr leaks this detail
     #[error("profile does not exist")]
     ProfileNotFound,
+    #[error("device does not exist")]
+    DeviceNotFound,
 
     #[error("credentials are wrong")]
     WrongCredentials,
@@ -39,7 +39,9 @@ pub enum Error {
     TokenExpired,
 
     #[error("cannot modify a parent profile")]
-    CantModifyParentProfile,
+    CannotModifyParentProfile,
+    #[error("cannot set others' device as private")]
+    CannotSetOthersDevicePrivate,
 
     #[error(transparent)]
     InvalidData(#[from] garde::Report),
@@ -62,7 +64,6 @@ impl From<&Error> for StatusCode {
         match value {
             Error::UsernameTaken
             | Error::ProfileNameTaken
-            | Error::DeviceMACTaken
             | Error::DeviceNameTaken
             | Error::CannotDeleteLastAdmin => Self::CONFLICT,
 
@@ -72,8 +73,12 @@ impl From<&Error> for StatusCode {
             | Error::InvalidToken
             | Error::TokenExpired => Self::UNAUTHORIZED,
 
-            Error::CantModifyParentProfile => Self::FORBIDDEN,
-            Error::ProfileNotFound => Self::NOT_FOUND,
+            Error::CannotModifyParentProfile | Error::CannotSetOthersDevicePrivate => {
+                Self::FORBIDDEN
+            }
+
+            Error::ProfileNotFound | Error::DeviceNotFound => Self::NOT_FOUND,
+
             Error::InvalidJson(_) => Self::BAD_REQUEST,
             Error::InvalidData(_) => Self::UNPROCESSABLE_ENTITY,
 
@@ -97,14 +102,13 @@ impl From<argon2::password_hash::Error> for Error {
 impl From<sqlx::Error> for Error {
     fn from(error: sqlx::Error) -> Self {
         if let sqlx::Error::Database(err) = &error
-            && err.is_unique_violation()
             && let Some(constraint) = err.constraint()
         {
             return match constraint {
                 "users_username_key" => Self::UsernameTaken,
                 "profiles_owner_id_name_key" => Self::ProfileNameTaken,
-                "devices_owner_id_mac_address_key" => Self::DeviceMACTaken,
                 "devices_owner_id_name_key" => Self::DeviceNameTaken,
+                "devices_profile_id_fkey" => Self::ProfileNotFound,
                 _ => Self::Database(error),
             };
         }

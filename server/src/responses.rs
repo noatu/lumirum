@@ -1,6 +1,7 @@
 #![allow(unused)]
 use crate::features::{
     auth::AuthResponse,
+    devices::Device,
     profiles::Profile,
 };
 use error_set::error_set;
@@ -50,6 +51,8 @@ error_set! {
     #[derive(IntoResponses)]
     Validation := BadRequest || UnprocessableEntity
 
+    #[derive(IntoResponses)]
+    ValidInternalAuth := Validation || InternalServerError || Unauthorized
 
     // AUTH
 
@@ -65,12 +68,12 @@ error_set! {
     Register := Validation || InternalServerError || UsernameTaken || {
         /// User registered successfully
         #[response(status = CREATED)]
-        UserCreated(AuthResponse),
+        Created(AuthResponse),
     }
 
     #[derive(IntoResponses)]
     #[skip(Error,Display,Debug)]
-    Login := Validation || InternalServerError || Unauthorized || {
+    Login := ValidInternalAuth || {
         /// Login successful
         #[response(status = OK)]
         Success(AuthResponse),
@@ -86,14 +89,14 @@ error_set! {
     }
     #[derive(IntoResponses)]
     #[skip(Error,Display,Debug)]
-    PatchMe := Validation || InternalServerError || Unauthorized || UsernameTaken || {
+    PatchMe := ValidInternalAuth || UsernameTaken || {
         /// Account updated successfully
         #[response(status = OK)]
         Success(AuthResponse),
     }
     #[derive(IntoResponses)]
     #[skip(Error,Display,Debug)]
-    DeleteMe := Validation || InternalServerError || Unauthorized || {
+    DeleteMe := ValidInternalAuth || {
         /// Account deleted successfully
         #[response(status = NO_CONTENT)]
         Success,
@@ -127,29 +130,31 @@ error_set! {
     GetProfiles := InternalServerError || Unauthorized || {
         /// Get all profiles information
         #[response(status = OK)]
-        Success(AuthResponse),
+        Success(Vec<AuthResponse>),
     }
     #[derive(IntoResponses)]
     #[skip(Error,Display,Debug)]
-    PostProfile := Validation || InternalServerError || Unauthorized || ProfileNameTaken || {
+    PostProfile := ValidInternalAuth || ProfileNameTaken || {
         /// Profile created successfully
         #[response(status = CREATED)]
-        Success(Profile),
+        Created(Profile),
     }
     #[derive(IntoResponses)]
     #[skip(Error,Display,Debug)]
-    PutProfile := Validation || InternalServerError || Unauthorized || ProfileNameTaken || {
+    PutProfile := ValidInternalAuth || ProfileNameTaken || {
         /// Profile updated successfully
         #[response(status = OK)]
         Success(Profile),
         /// Cannot update a parent profile
         #[response(status = FORBIDDEN)]
-        CantParentProfile(ErrorResponse)
-
+        CantParentProfile(ErrorResponse),
+        /// Profile not found
+        #[response(status = NOT_FOUND)]
+        NotFound(ErrorResponse),
     }
     #[derive(IntoResponses)]
     #[skip(Error,Display,Debug)]
-    DeleteProfile := Validation || InternalServerError || Unauthorized || {
+    DeleteProfile := ValidInternalAuth || {
         /// Profile deleted successfully
         #[response(status = NO_CONTENT)]
         Success,
@@ -158,4 +163,71 @@ error_set! {
         CantParentProfile(ErrorResponse)
     }
 
+
+    // DEVICES
+
+    #[derive(IntoResponses)]
+    DeviceNameTaken {
+        /// Device name is taken
+        #[response(status = CONFLICT)]
+        DeviceNameTaken(ErrorResponse),
+    }
+    #[derive(IntoResponses)]
+    DeviceNotFound {
+        /// Device does not exist
+        #[response(status = NOT_FOUND)]
+        NotFound(ErrorResponse),
+    }
+
+    #[derive(IntoResponses)]
+    #[skip(Error,Display,Debug)]
+    GetDevice := InternalServerError || Unauthorized || DeviceNotFound || {
+        /// Get device information
+        #[response(status = OK)]
+        Success(Device),
+    }
+    #[derive(IntoResponses)]
+    #[skip(Error,Display,Debug)]
+    GetDevices := InternalServerError || Unauthorized || {
+        /// Get all devices
+        #[response(status = OK)]
+        Success(Vec<Device>),
+    }
+    #[derive(IntoResponses)]
+    #[skip(Error,Display,Debug)]
+    PostDevice := ValidInternalAuth || DeviceNameTaken || DeviceNotFound || {
+        /// Device created successfully
+        #[response(status = CREATED)]
+        Success(Device),
+    }
+    #[derive(IntoResponses)]
+    #[skip(Error,Display,Debug)]
+    PutDevice := ValidInternalAuth || DeviceNameTaken || DeviceNotFound || {
+        /// Device updated successfully
+        #[response(status = OK)]
+        Success(Device),
+        /// Cannot modify this device
+        #[response(status = FORBIDDEN)]
+        Forbidden(ErrorResponse),
+    }
+    #[derive(IntoResponses)]
+    #[skip(Error,Display,Debug)]
+    DeleteDevice := InternalServerError || Unauthorized || DeviceNotFound || {
+        /// Device deleted successfully
+        #[response(status = NO_CONTENT)]
+        Success,
+        /// Cannot delete this device
+        #[response(status = FORBIDDEN)]
+        Forbidden(ErrorResponse),
+    }
+    #[derive(IntoResponses)]
+    #[skip(Error,Display,Debug)]
+    RegenerateDeviceKey := InternalServerError || Unauthorized || DeviceNotFound || {
+        /// Key regenerated successfully returns the updated device
+        #[response(status = OK)]
+        Success(Device),
+        /// Forbidden
+        #[response(status = FORBIDDEN)]
+        Forbidden(ErrorResponse),
+    }
 }

@@ -18,9 +18,11 @@ use crate::{
     features::auth::{
         Authenticated,
         Role,
+        User,
     },
     responses::{
         DeleteProfile,
+        GetProfile,
         GetProfiles,
         PostProfile,
         PutProfile,
@@ -44,7 +46,7 @@ pub fn router() -> OpenApiRouter<AppState> {
 #[utoipa::path(
     get,
     path = "/{id}",
-    responses(GetProfiles),
+    responses(GetProfile),
     tag = TAG,
     security(("jwt" = []))
 )]
@@ -116,9 +118,12 @@ pub async fn patch(
     Validated(payload): Validated<CreateProfile>,
 ) -> Result<Json<Profile>, Error> {
     let payload = payload.into_inner();
+    let children = User::get_children(&state.pool, user.id).await?;
+
     let profile = Profile::update(&state.pool, id, |profile| match user.role {
-        Role::User(parent) if profile.owner_id == parent => Err(Error::CantModifyParentProfile),
+        Role::User(parent) if profile.owner_id == parent => Err(Error::CannotModifyParentProfile),
         Role::Owner | Role::User(_) if profile.owner_id == user.id => Ok(profile.patch(payload)),
+        Role::Owner if children.contains(&profile.owner_id) => Ok(profile.patch(payload)),
         _ => Err(Error::ProfileNotFound),
     })
     .await?;
@@ -142,7 +147,7 @@ pub async fn delete(
     Profile::delete(&state.pool, id, |profile| match user.role {
         Role::Admin => Ok(true),
         Role::Owner | Role::User(_) if profile.owner_id == user.id => Ok(true),
-        Role::User(parent) if profile.owner_id == parent => Err(Error::CantModifyParentProfile),
+        Role::User(parent) if profile.owner_id == parent => Err(Error::CannotModifyParentProfile),
         _ => Err(Error::ProfileNotFound),
     })
     .await?;

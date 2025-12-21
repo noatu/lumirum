@@ -30,7 +30,10 @@ mod routes {
     pub mod register;
 }
 
-pub use db::Role;
+pub use db::{
+    Role,
+    User,
+};
 pub use jwt::Authenticated;
 
 pub const TAG: &str = "Authentication";
