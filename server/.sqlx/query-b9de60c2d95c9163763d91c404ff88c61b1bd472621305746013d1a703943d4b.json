@@ -1,6 +1,6 @@
 {
   "db_name": "PostgreSQL",
-  "query": "SELECT * FROM profiles WHERE id = $1",
+  "query": "SELECT * FROM profiles WHERE owner_id = $1 OR (\n                owner_id = $2 AND is_shared = true\n             ) ORDER BY created_at DESC",
   "describe": {
     "columns": [
       {
@@ -76,6 +76,7 @@
     ],
     "parameters": {
       "Left": [
+        "Int8",
         "Int8"
       ]
     },
@@ -96,5 +97,5 @@
       false
     ]
   },
-  "hash": "d9db2b6c9db243005b52295e4037ce305bb1f0c0bd8afb9704ac33bee8dceede"
+  "hash": "b9de60c2d95c9163763d91c404ff88c61b1bd472621305746013d1a703943d4b"
 }

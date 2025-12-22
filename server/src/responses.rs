@@ -65,10 +65,13 @@ error_set! {
 
     #[derive(IntoResponses)]
     #[skip(Error,Display,Debug)]
-    Register := Validation || InternalServerError || UsernameTaken || {
+    Register := ValidInternalAuth || UsernameTaken || {
         /// User registered successfully
         #[response(status = CREATED)]
         Created(AuthResponse),
+        /// User role cannot create a user
+        #[response(status = FORBIDDEN)]
+        UserCantUser(ErrorResponse),
     }
 
     #[derive(IntoResponses)]
@@ -100,7 +103,7 @@ error_set! {
         /// Account deleted successfully
         #[response(status = NO_CONTENT)]
         Success,
-        /// Cannot delete last administrator account
+        /// Cannot delete administrator account
         #[response(status = CONFLICT)]
         LastAdmin(ErrorResponse),
     }
@@ -109,18 +112,11 @@ error_set! {
     // PROFILES
 
     #[derive(IntoResponses)]
-    ProfileNameTaken {
-        /// Profile name is taken
-        #[response(status = CONFLICT)]
-        ProfileNameTaken(ErrorResponse),
-    }
-
-    #[derive(IntoResponses)]
     #[skip(Error,Display,Debug)]
     GetProfile := InternalServerError || Unauthorized || {
         /// Get profile information
         #[response(status = OK)]
-        Success(AuthResponse),
+        Success(Profile),
         /// Profile does not exist
         #[response(status = NOT_FOUND)]
         NotFound(ErrorResponse),
@@ -130,24 +126,30 @@ error_set! {
     GetProfiles := InternalServerError || Unauthorized || {
         /// Get all profiles information
         #[response(status = OK)]
-        Success(Vec<AuthResponse>),
+        Success(Vec<Profile>),
     }
     #[derive(IntoResponses)]
     #[skip(Error,Display,Debug)]
-    PostProfile := ValidInternalAuth || ProfileNameTaken || {
+    PostProfile := ValidInternalAuth || {
         /// Profile created successfully
         #[response(status = CREATED)]
         Created(Profile),
+        /// Profile name is taken
+        #[response(status = CONFLICT)]
+        ProfileNameTaken(ErrorResponse),
     }
     #[derive(IntoResponses)]
     #[skip(Error,Display,Debug)]
-    PutProfile := ValidInternalAuth || ProfileNameTaken || {
+    PutProfile := ValidInternalAuth || {
         /// Profile updated successfully
         #[response(status = OK)]
         Success(Profile),
-        /// Cannot update a parent profile
+        /// Cannot set others' profile private
         #[response(status = FORBIDDEN)]
-        CantParentProfile(ErrorResponse),
+        CantProfilePrivate(ErrorResponse),
+        /// Profile name is taken
+        #[response(status = CONFLICT)]
+        ProfileNameTaken(ErrorResponse),
         /// Profile not found
         #[response(status = NOT_FOUND)]
         NotFound(ErrorResponse),
@@ -160,18 +162,15 @@ error_set! {
         Success,
         /// Cannot delete a parent profile
         #[response(status = FORBIDDEN)]
-        CantParentProfile(ErrorResponse)
+        CantParentProfile(ErrorResponse),
+        /// Profile not found
+        #[response(status = NOT_FOUND)]
+        NotFound(ErrorResponse),
     }
 
 
     // DEVICES
 
-    #[derive(IntoResponses)]
-    DeviceNameTaken {
-        /// Device name is taken
-        #[response(status = CONFLICT)]
-        DeviceNameTaken(ErrorResponse),
-    }
     #[derive(IntoResponses)]
     DeviceNotFound {
         /// Device does not exist
@@ -195,20 +194,26 @@ error_set! {
     }
     #[derive(IntoResponses)]
     #[skip(Error,Display,Debug)]
-    PostDevice := ValidInternalAuth || DeviceNameTaken || DeviceNotFound || {
+    PostDevice := ValidInternalAuth || {
         /// Device created successfully
         #[response(status = CREATED)]
         Success(Device),
+        /// Device name is taken
+        #[response(status = CONFLICT)]
+        DeviceNameTaken(ErrorResponse),
     }
     #[derive(IntoResponses)]
     #[skip(Error,Display,Debug)]
-    PutDevice := ValidInternalAuth || DeviceNameTaken || DeviceNotFound || {
+    PutDevice := ValidInternalAuth || DeviceNotFound || {
         /// Device updated successfully
         #[response(status = OK)]
         Success(Device),
-        /// Cannot modify this device
+        /// Device name is taken
+        #[response(status = CONFLICT)]
+        DeviceNameTaken(ErrorResponse),
+        /// Cannot set others' device private
         #[response(status = FORBIDDEN)]
-        Forbidden(ErrorResponse),
+        CantDevicePrivate(ErrorResponse),
     }
     #[derive(IntoResponses)]
     #[skip(Error,Display,Debug)]
@@ -226,7 +231,7 @@ error_set! {
         /// Key regenerated successfully returns the updated device
         #[response(status = OK)]
         Success(Device),
-        /// Forbidden
+        /// Users cannot regenerate an Owner's device key
         #[response(status = FORBIDDEN)]
         Forbidden(ErrorResponse),
     }

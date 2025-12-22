@@ -1,6 +1,6 @@
 {
   "db_name": "PostgreSQL",
-  "query": "SELECT * FROM profiles WHERE owner_id = $1 ORDER BY name ASC",
+  "query": "SELECT * FROM profiles WHERE owner_id = $1 OR (\n                owner_id IN (SELECT id FROM users WHERE parent_id = $1)\n                AND is_shared = true\n             ) ORDER BY created_at DESC",
   "describe": {
     "columns": [
       {
@@ -10,61 +10,66 @@
       },
       {
         "ordinal": 1,
-        "name": "owner_id",
-        "type_info": "Int8"
-      },
-      {
-        "ordinal": 2,
         "name": "name",
         "type_info": "Text"
       },
       {
+        "ordinal": 2,
+        "name": "owner_id",
+        "type_info": "Int8"
+      },
+      {
         "ordinal": 3,
+        "name": "is_shared",
+        "type_info": "Bool"
+      },
+      {
+        "ordinal": 4,
         "name": "latitude",
         "type_info": "Float8"
       },
       {
-        "ordinal": 4,
+        "ordinal": 5,
         "name": "longitude",
         "type_info": "Float8"
       },
       {
-        "ordinal": 5,
+        "ordinal": 6,
         "name": "timezone",
         "type_info": "Text"
       },
       {
-        "ordinal": 6,
+        "ordinal": 7,
         "name": "sleep_start",
         "type_info": "Time"
       },
       {
-        "ordinal": 7,
+        "ordinal": 8,
         "name": "sleep_end",
         "type_info": "Time"
       },
       {
-        "ordinal": 8,
+        "ordinal": 9,
         "name": "night_mode_enabled",
         "type_info": "Bool"
       },
       {
-        "ordinal": 9,
+        "ordinal": 10,
         "name": "min_color_temp",
         "type_info": "Int4"
       },
       {
-        "ordinal": 10,
+        "ordinal": 11,
         "name": "max_color_temp",
         "type_info": "Int4"
       },
       {
-        "ordinal": 11,
+        "ordinal": 12,
         "name": "motion_timeout_seconds",
         "type_info": "Int4"
       },
       {
-        "ordinal": 12,
+        "ordinal": 13,
         "name": "created_at",
         "type_info": "Timestamptz"
       }
@@ -75,6 +80,7 @@
       ]
     },
     "nullable": [
+      false,
       false,
       false,
       false,
@@ -90,5 +96,5 @@
       false
     ]
   },
-  "hash": "062ebbd1d190c36f57457f4a3157e9767dadd88d7304fa5488caeb5a9118272f"
+  "hash": "499a8dcb6e66189355a066ca9ad5a2e714bbea4838f30e7c7c58ca4710132b62"
 }

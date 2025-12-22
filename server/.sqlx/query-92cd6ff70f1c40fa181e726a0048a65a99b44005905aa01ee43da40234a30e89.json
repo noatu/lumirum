@@ -10,61 +10,66 @@
       },
       {
         "ordinal": 1,
-        "name": "owner_id",
-        "type_info": "Int8"
-      },
-      {
-        "ordinal": 2,
         "name": "name",
         "type_info": "Text"
       },
       {
+        "ordinal": 2,
+        "name": "owner_id",
+        "type_info": "Int8"
+      },
+      {
         "ordinal": 3,
+        "name": "is_shared",
+        "type_info": "Bool"
+      },
+      {
+        "ordinal": 4,
         "name": "latitude",
         "type_info": "Float8"
       },
       {
-        "ordinal": 4,
+        "ordinal": 5,
         "name": "longitude",
         "type_info": "Float8"
       },
       {
-        "ordinal": 5,
+        "ordinal": 6,
         "name": "timezone",
         "type_info": "Text"
       },
       {
-        "ordinal": 6,
+        "ordinal": 7,
         "name": "sleep_start",
         "type_info": "Time"
       },
       {
-        "ordinal": 7,
+        "ordinal": 8,
         "name": "sleep_end",
         "type_info": "Time"
       },
       {
-        "ordinal": 8,
+        "ordinal": 9,
         "name": "night_mode_enabled",
         "type_info": "Bool"
       },
       {
-        "ordinal": 9,
+        "ordinal": 10,
         "name": "min_color_temp",
         "type_info": "Int4"
       },
       {
-        "ordinal": 10,
+        "ordinal": 11,
         "name": "max_color_temp",
         "type_info": "Int4"
       },
       {
-        "ordinal": 11,
+        "ordinal": 12,
         "name": "motion_timeout_seconds",
         "type_info": "Int4"
       },
       {
-        "ordinal": 12,
+        "ordinal": 13,
         "name": "created_at",
         "type_info": "Timestamptz"
       }
@@ -85,6 +90,7 @@
       ]
     },
     "nullable": [
+      false,
       false,
       false,
       false,

@@ -1,6 +1,7 @@
 use axum::{
     RequestPartsExt,
     extract::FromRequestParts,
+    http::request::Parts,
 };
 use axum_extra::{
     TypedHeader,
@@ -8,6 +9,7 @@ use axum_extra::{
         Authorization,
         authorization::Bearer,
     },
+    typed_header::TypedHeaderRejectionReason,
 };
 use chrono::{
     Duration,
@@ -27,7 +29,10 @@ use serde::{
     Serialize,
 };
 
-use crate::errors::Error;
+use crate::{
+    AppState,
+    errors::Error,
+};
 
 use super::Role;
 
@@ -64,20 +69,10 @@ pub struct Authenticated {
     // pub expires: DateTime<Utc>,
 }
 
-impl FromRequestParts<crate::AppState> for Authenticated {
-    type Rejection = Error;
+impl TryFrom<(Bearer, &str)> for Authenticated {
+    type Error = Error;
 
-    async fn from_request_parts(
-        parts: &mut axum::http::request::Parts,
-        state: &crate::AppState,
-    ) -> Result<Self, Self::Rejection> {
-        let TypedHeader(Authorization(bearer)) = parts
-            .extract::<TypedHeader<Authorization<Bearer>>>()
-            .await
-            .map_err(|_| Error::MissingCredentials)?;
-
-        let secret = &state.jwt_secret;
-
+    fn try_from((bearer, secret): (Bearer, &str)) -> Result<Self, Self::Error> {
         let token_data = decode::<Claims>(
             bearer.token(),
             &DecodingKey::from_secret(secret.as_bytes()),
@@ -93,5 +88,41 @@ impl FromRequestParts<crate::AppState> for Authenticated {
             role: token_data.claims.role,
             token: bearer.token().to_owned(),
         })
+    }
+}
+
+impl FromRequestParts<AppState> for Authenticated {
+    type Rejection = Error;
+
+    async fn from_request_parts(
+        parts: &mut Parts,
+        state: &AppState,
+    ) -> Result<Self, Self::Rejection> {
+        let TypedHeader(Authorization(bearer)) = parts
+            .extract::<TypedHeader<Authorization<Bearer>>>()
+            .await?;
+
+        Self::try_from((bearer, state.jwt_secret.as_str()))
+    }
+}
+
+pub struct MaybeAuthenticated(pub Option<Authenticated>);
+
+impl FromRequestParts<AppState> for MaybeAuthenticated {
+    type Rejection = Error;
+
+    async fn from_request_parts(
+        parts: &mut Parts,
+        state: &AppState,
+    ) -> Result<Self, Self::Rejection> {
+        let bearer = match parts.extract::<TypedHeader<Authorization<Bearer>>>().await {
+            Ok(TypedHeader(Authorization(bearer))) => bearer,
+            Err(err) => match err.reason() {
+                TypedHeaderRejectionReason::Missing => return Ok(Self(None)),
+                _ => return Err(Error::InvalidToken),
+            },
+        };
+
+        Authenticated::try_from((bearer, state.jwt_secret.as_str())).map(|x| Self(Some(x)))
     }
 }

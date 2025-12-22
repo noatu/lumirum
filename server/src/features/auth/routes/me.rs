@@ -24,7 +24,10 @@ use crate::{
     features::auth::{
         AuthResponse,
         TAG,
-        db::User,
+        db::{
+            Role,
+            User,
+        },
         jwt::Authenticated,
     },
     responses::{
@@ -44,11 +47,11 @@ use crate::{
 )]
 pub async fn get(
     State(state): State<AppState>,
-    user: Authenticated,
+    auth: Authenticated,
 ) -> Result<Json<AuthResponse>, Error> {
     Ok(Json(AuthResponse {
-        user: User::get_by_id(&state.pool, user.id).await?,
-        token: user.token,
+        user: User::get_by_id(&state.pool, auth.id).await?,
+        token: auth.token,
     }))
 }
 
@@ -77,22 +80,21 @@ pub struct ChangeRequest {
 )]
 pub async fn patch(
     State(state): State<AppState>,
-    user: Authenticated,
+    auth: Authenticated,
     Validated(payload): Validated<ChangeRequest>,
 ) -> Result<Json<AuthResponse>, Error> {
-    let token = user.token;
+    let token = auth.token;
     let new_password_hash = match &payload.new_password {
         Some(pass) => Some(
             Argon2::default()
                 .hash_password(pass.as_bytes(), &SaltString::generate(&mut OsRng))?
                 .to_string(),
         ),
-
         None => None,
     };
 
     let payload = payload.into_inner();
-    let user = User::update(&state.pool, user.id, |user| {
+    let user = User::update(&state.pool, auth.id, |user| {
         // FIXME: performance hit, hashing inside a transaction
         Argon2::default().verify_password(
             payload.password.as_bytes(),
@@ -140,10 +142,14 @@ pub struct DeleteRequest {
 )]
 pub async fn delete(
     State(state): State<AppState>,
-    user: Authenticated,
+    auth: Authenticated,
     Validated(payload): Validated<DeleteRequest>,
 ) -> Result<StatusCode, Error> {
-    let user = User::get_by_id(&state.pool, user.id).await?;
+    if auth.role == Role::Admin {
+        return Err(Error::CannotDeleteAnAdmin);
+    }
+
+    let user = User::get_by_id(&state.pool, auth.id).await?;
 
     Argon2::default().verify_password(
         payload.password.as_bytes(),
@@ -151,5 +157,6 @@ pub async fn delete(
     )?;
 
     User::delete(&state.pool, user.id).await?;
+
     Ok(StatusCode::NO_CONTENT)
 }

@@ -19,8 +19,11 @@ use crate::errors::Error;
 #[derive(Debug, Clone, Serialize, ToSchema)]
 pub struct Profile {
     pub id: i64,
-    pub owner_id: i64,
     pub name: String,
+
+    pub owner_id: i64,
+    /// Whether the sub-users will see the profile
+    pub is_shared: bool,
 
     pub latitude: Option<f64>,
     pub longitude: Option<f64>,
@@ -50,6 +53,10 @@ pub struct CreateProfile {
 
     pub latitude: Option<f64>,
     pub longitude: Option<f64>,
+
+    /// Whether the sub-users will see the profile
+    #[schema(default = true)]
+    pub is_shared: bool,
 
     #[schema(default = "UTC", example = "Europe/Kyiv")]
     pub timezone: String,
@@ -116,16 +123,33 @@ impl Profile {
             .ok_or(Error::ProfileNotFound)
     }
 
-    pub async fn list_by_owner(pool: &PgPool, owner_id: i64) -> Result<Vec<Self>, Error> {
-        let profiles = sqlx::query_as!(
+    pub async fn list_as_owner(pool: &PgPool, owner_id: i64) -> Result<Vec<Self>, Error> {
+        Ok(sqlx::query_as!(
             Self,
-            "SELECT * FROM profiles WHERE owner_id = $1 ORDER BY name ASC",
+            "SELECT * FROM profiles WHERE owner_id = $1 OR (
+                owner_id IN (SELECT id FROM users WHERE parent_id = $1)
+                AND is_shared = true
+             ) ORDER BY created_at DESC",
             owner_id
         )
         .fetch_all(pool)
-        .await?;
-
-        Ok(profiles)
+        .await?)
+    }
+    pub async fn list_as_user(
+        pool: &PgPool,
+        user_id: i64,
+        parent_id: i64,
+    ) -> Result<Vec<Self>, Error> {
+        Ok(sqlx::query_as!(
+            Self,
+            "SELECT * FROM profiles WHERE owner_id = $1 OR (
+                owner_id = $2 AND is_shared = true
+             ) ORDER BY created_at DESC",
+            user_id,
+            parent_id,
+        )
+        .fetch_all(pool)
+        .await?)
     }
 
     async fn get_by_id_for_update(conn: &mut sqlx::PgConnection, id: i64) -> Result<Self, Error> {
@@ -218,6 +242,10 @@ impl Profile {
 
         if self.name != new.name {
             self.name = new.name;
+            updated = true;
+        }
+        if self.is_shared != new.is_shared {
+            self.is_shared = new.is_shared;
             updated = true;
         }
         if self.latitude != new.latitude {

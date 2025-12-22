@@ -138,8 +138,7 @@ impl User {
     pub async fn get_by_id(pool: &PgPool, id: i64) -> Result<Self, Error> {
         sqlx::query_as!(
             DbUser,
-            r#"SELECT id, username, password_hash, role AS "role: DbRole",
-                      parent_id, created_at
+            r#"SELECT id, username, password_hash, role AS "role: DbRole", parent_id, created_at
                FROM users WHERE id = $1"#,
             id,
         )
@@ -151,8 +150,7 @@ impl User {
     pub async fn get_by_username(pool: &PgPool, username: &str) -> Result<Self, Error> {
         sqlx::query_as!(
             DbUser,
-            r#"SELECT id, username, password_hash, role AS "role: DbRole",
-                      parent_id, created_at
+            r#"SELECT id, username, password_hash, role AS "role: DbRole", parent_id, created_at
                FROM users WHERE username = $1"#,
             username,
         )
@@ -210,29 +208,9 @@ impl User {
     }
 
     pub async fn delete(pool: &PgPool, id: i64) -> Result<(), Error> {
-        let mut tx = pool.begin().await?;
-
-        let role = sqlx::query_scalar!(
-            r#"SELECT role AS "role: DbRole" FROM users WHERE id = $1 FOR UPDATE"#,
-            id
-        )
-        .fetch_one(&mut *tx)
-        .await?;
-
-        if role == DbRole::Admin {
-            let count = sqlx::query_scalar!("SELECT COUNT(*) FROM users WHERE role = 'admin'")
-                .fetch_one(&mut *tx)
-                .await?;
-            if count == Some(1) {
-                return Err(Error::CannotDeleteLastAdmin);
-            }
-        }
-
         sqlx::query!("DELETE FROM users WHERE id = $1", id)
-            .execute(&mut *tx)
+            .execute(pool)
             .await?;
-
-        tx.commit().await?;
 
         Ok(())
     }

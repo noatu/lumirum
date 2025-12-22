@@ -39,10 +39,14 @@ pub const TAG: &str = "Profiles";
 pub fn router() -> OpenApiRouter<AppState> {
     OpenApiRouter::new()
         .routes(routes!(post, get_all))
-        .routes(routes!(get, patch, delete))
+        .routes(routes!(get, put, delete))
 }
 
 /// Get profile info
+///
+/// - Owner or User may get their own profiles.
+/// - Users may get their Owner's shared profiles.
+/// - Owners may get their Users' shared profiles.
 #[utoipa::path(
     get,
     path = "/{id}",
@@ -52,19 +56,29 @@ pub fn router() -> OpenApiRouter<AppState> {
 )]
 pub async fn get(
     State(state): State<AppState>,
-    user: Authenticated,
+    auth: Authenticated,
     Path(id): Path<i64>,
 ) -> Result<Json<Profile>, Error> {
     let profile = Profile::get_by_id(&state.pool, id).await?;
 
-    if profile.owner_id == user.id || Role::User(profile.owner_id) == user.role {
-        return Ok(Json(profile));
-    }
-
-    Err(Error::ProfileNotFound)
+    Ok(Json(match auth.role {
+        Role::Admin => profile,
+        Role::Owner | Role::User(_) if profile.owner_id == auth.id => profile,
+        Role::User(parent) if profile.owner_id == parent && profile.is_shared => profile,
+        Role::Owner
+            if profile.is_shared
+                && User::is_child(&state.pool, profile.owner_id, auth.id).await? =>
+        {
+            profile
+        }
+        _ => return Err(Error::ProfileNotFound),
+    }))
 }
 
 /// List all profiles
+///
+/// - Owner may get their own profiles and their Users' shared profiles.
+/// - Users may get their own profiles and their Owner's shared profiles.
 #[utoipa::path(
     get,
     path = "",
@@ -74,15 +88,12 @@ pub async fn get(
 )]
 pub async fn get_all(
     State(state): State<AppState>,
-    user: Authenticated,
+    auth: Authenticated,
 ) -> Result<Json<Vec<Profile>>, Error> {
-    let mut profiles = Profile::list_by_owner(&state.pool, user.id).await?;
-
-    if let Role::User(parent_id) = user.role {
-        profiles.extend(Profile::list_by_owner(&state.pool, parent_id).await?);
-    }
-
-    Ok(Json(profiles))
+    Ok(Json(match auth.role {
+        Role::Admin | Role::Owner => Profile::list_as_owner(&state.pool, auth.id).await?,
+        Role::User(parent) => Profile::list_as_user(&state.pool, auth.id, parent).await?,
+    }))
 }
 
 /// Create a new profile
@@ -103,6 +114,10 @@ pub async fn post(
 }
 
 /// Update a profile
+///
+/// - Owner or User may update their own profiles.
+/// - Users may update their Owner's shared profiles.
+/// - Owners may update their Users' shared profiles.
 #[utoipa::path(
     put,
     path = "/{id}",
@@ -111,19 +126,30 @@ pub async fn post(
     tag = TAG,
     security(("jwt" = []))
 )]
-pub async fn patch(
+pub async fn put(
     State(state): State<AppState>,
-    user: Authenticated,
+    auth: Authenticated,
     Path(id): Path<i64>,
     Validated(payload): Validated<CreateProfile>,
 ) -> Result<Json<Profile>, Error> {
-    let payload = payload.into_inner();
-    let children = User::get_children(&state.pool, user.id).await?;
+    let children = User::get_children(&state.pool, auth.id).await?;
 
-    let profile = Profile::update(&state.pool, id, |profile| match user.role {
-        Role::User(parent) if profile.owner_id == parent => Err(Error::CannotModifyParentProfile),
-        Role::Owner | Role::User(_) if profile.owner_id == user.id => Ok(profile.patch(payload)),
-        Role::Owner if children.contains(&profile.owner_id) => Ok(profile.patch(payload)),
+    let payload = payload.into_inner();
+    let profile = Profile::update(&state.pool, id, |profile| match auth.role {
+        Role::Admin => Ok(profile.patch(payload)),
+        Role::Owner | Role::User(_) if profile.owner_id == auth.id => Ok(profile.patch(payload)),
+        Role::User(parent) if profile.owner_id == parent && profile.is_shared => {
+            if !payload.is_shared {
+                return Err(Error::CannotSetOthersProfilePrivate);
+            }
+            Ok(profile.patch(payload))
+        }
+        Role::Owner if profile.is_shared && children.contains(&profile.owner_id) => {
+            if !payload.is_shared {
+                return Err(Error::CannotSetOthersProfilePrivate);
+            }
+            Ok(profile.patch(payload))
+        }
         _ => Err(Error::ProfileNotFound),
     })
     .await?;
@@ -132,6 +158,8 @@ pub async fn patch(
 }
 
 /// Delete a profile
+///
+/// Owner or User may delete **only** their own profiles.
 #[utoipa::path(
     delete,
     path = "/{id}",
@@ -147,7 +175,6 @@ pub async fn delete(
     Profile::delete(&state.pool, id, |profile| match user.role {
         Role::Admin => Ok(true),
         Role::Owner | Role::User(_) if profile.owner_id == user.id => Ok(true),
-        Role::User(parent) if profile.owner_id == parent => Err(Error::CannotModifyParentProfile),
         _ => Err(Error::ProfileNotFound),
     })
     .await?;

@@ -41,10 +41,14 @@ pub const TAG: &str = "Devices";
 pub fn router() -> OpenApiRouter<AppState> {
     OpenApiRouter::new()
         .routes(routes!(post, get_all))
-        .routes(routes!(get, patch, delete, regenerate_key))
+        .routes(routes!(get, put, delete, regenerate_key))
 }
 
 /// Get device info
+///
+/// - Owner or User may get their own devices.
+/// - Users may get their Owner's public devices.
+/// - Owners may get their Users' public devices.
 #[utoipa::path(
     get,
     path = "/{id}",
@@ -54,21 +58,29 @@ pub fn router() -> OpenApiRouter<AppState> {
 )]
 pub async fn get(
     State(state): State<AppState>,
-    user: Authenticated,
+    auth: Authenticated,
     Path(id): Path<i64>,
 ) -> Result<Json<Device>, Error> {
     let device = Device::get_by_id(&state.pool, id).await?;
 
-    Ok(Json(match user.role {
+    Ok(Json(match auth.role {
         Role::Admin => device,
-        Role::Owner | Role::User(_) if device.owner_id == user.id => device,
+        Role::Owner | Role::User(_) if device.owner_id == auth.id => device,
         Role::User(parent) if device.owner_id == parent && device.is_public => device,
-        Role::Owner if User::is_child(&state.pool, device.owner_id, user.id).await? => device,
+        Role::Owner
+            if device.is_public
+                && User::is_child(&state.pool, device.owner_id, auth.id).await? =>
+        {
+            device
+        }
         _ => return Err(Error::DeviceNotFound),
     }))
 }
 
-/// List all relevant devices
+/// List all devices
+///
+/// - Owner may get their own devices and their Users' public devices.
+/// - Users may get their own devices and their Owner's public devices.
 #[utoipa::path(
     get,
     path = "",
@@ -78,12 +90,11 @@ pub async fn get(
 )]
 pub async fn get_all(
     State(state): State<AppState>,
-    user: Authenticated,
+    auth: Authenticated,
 ) -> Result<Json<Vec<Device>>, Error> {
-    Ok(Json(match user.role {
-        Role::Admin => vec![],
-        Role::Owner => Device::list_owner_devices(&state.pool, user.id).await?,
-        Role::User(parent) => Device::list_user_devices(&state.pool, user.id, parent).await?,
+    Ok(Json(match auth.role {
+        Role::Admin | Role::Owner => Device::list_as_owner(&state.pool, auth.id).await?,
+        Role::User(parent) => Device::list_as_user(&state.pool, auth.id, parent).await?,
     }))
 }
 
@@ -105,6 +116,10 @@ pub async fn post(
 }
 
 /// Update a device
+///
+/// - Owner or User may update their own devices.
+/// - Users may update their Owner's public devices.
+/// - Owners may update their Users' public devices.
 #[utoipa::path(
     put,
     path = "/{id}",
@@ -113,25 +128,25 @@ pub async fn post(
     tag = TAG,
     security(("jwt" = []))
 )]
-pub async fn patch(
+pub async fn put(
     State(state): State<AppState>,
-    user: Authenticated,
+    auth: Authenticated,
     Path(id): Path<i64>,
     Validated(payload): Validated<CreateDevice>,
 ) -> Result<Json<Device>, Error> {
-    let payload = payload.into_inner();
-    let children = User::get_children(&state.pool, user.id).await?;
+    let children = User::get_children(&state.pool, auth.id).await?;
 
-    let device = Device::update(&state.pool, id, |device| match user.role {
+    let payload = payload.into_inner();
+    let device = Device::update(&state.pool, id, |device| match auth.role {
         Role::Admin => Ok(device.patch(payload)),
-        Role::Owner | Role::User(_) if device.owner_id == user.id => Ok(device.patch(payload)),
-        Role::Owner if children.contains(&device.owner_id) => {
+        Role::Owner | Role::User(_) if device.owner_id == auth.id => Ok(device.patch(payload)),
+        Role::User(parent) if device.owner_id == parent && device.is_public => {
             if !payload.is_public {
                 return Err(Error::CannotSetOthersDevicePrivate);
             }
             Ok(device.patch(payload))
         }
-        Role::User(parent_id) if device.owner_id == parent_id && device.is_public => {
+        Role::Owner if device.is_public && children.contains(&device.owner_id) => {
             if !payload.is_public {
                 return Err(Error::CannotSetOthersDevicePrivate);
             }
@@ -145,6 +160,10 @@ pub async fn patch(
 }
 
 /// Regenerate device secret key
+///
+/// - Owner or User may regenerate the key for their own devices.
+/// - Users may **not** regenerate the key for their Owner's public devices.
+/// - Owners may regenerate the key for their Users' public devices.
 #[utoipa::path(
     post,
     path = "/{id}/key",
@@ -154,15 +173,20 @@ pub async fn patch(
 )]
 pub async fn regenerate_key(
     State(state): State<AppState>,
-    user: Authenticated,
+    auth: Authenticated,
     Path(id): Path<i64>,
 ) -> Result<Json<Device>, Error> {
-    let children = User::get_children(&state.pool, user.id).await?;
+    let children = User::get_children(&state.pool, auth.id).await?;
 
-    let device = Device::update(&state.pool, id, |device| match user.role {
+    let device = Device::update(&state.pool, id, |device| match auth.role {
         Role::Admin => Ok(device.regenerate_key()),
-        Role::Owner | Role::User(_) if device.owner_id == user.id => Ok(device.regenerate_key()),
-        Role::Owner if children.contains(&device.owner_id) => Ok(device.regenerate_key()),
+        Role::Owner | Role::User(_) if device.owner_id == auth.id => Ok(device.regenerate_key()),
+        Role::User(parent) if device.owner_id == parent && device.is_public => {
+            Err(Error::CannotChangeDeviceKey)
+        }
+        Role::Owner if device.is_public && children.contains(&device.owner_id) => {
+            Ok(device.regenerate_key())
+        }
         _ => Err(Error::DeviceNotFound),
     })
     .await?;
@@ -171,6 +195,8 @@ pub async fn regenerate_key(
 }
 
 /// Delete a device
+///
+/// Owner or User may delete **only** their own devices.
 #[utoipa::path(
     delete,
     path = "/{id}",
@@ -186,6 +212,8 @@ pub async fn delete(
     Device::delete(&state.pool, id, |device| match user.role {
         Role::Admin => Ok(true),
         Role::Owner | Role::User(_) if device.owner_id == user.id => Ok(true),
+        // Role::User(parent_id) if device.owner_id == parent_id && device.is_public => Ok(true),
+        // Role::Owner if device.is_public && children.contains(&device.owner_id) => Ok(true),
         _ => Err(Error::DeviceNotFound),
     })
     .await?;

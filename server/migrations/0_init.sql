@@ -24,8 +24,10 @@ CREATE INDEX idx_users_parent_id ON users(parent_id) WHERE parent_id IS NOT NULL
 -- Circadian Rhythm Settings
 CREATE TABLE profiles (
     id BIGSERIAL PRIMARY KEY,
-    owner_id BIGINT NOT NULL REFERENCES users(id) ON DELETE CASCADE,
     name TEXT NOT NULL CHECK (length(name) > 0 AND length(name) <= 200),
+
+    owner_id BIGINT NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+    is_shared BOOLEAN NOT NULL DEFAULT true, -- Can other accounts see it?
 
     -- Location, for solar cycle calculation
     latitude DOUBLE PRECISION CHECK (latitude BETWEEN -90 AND 90),
@@ -54,7 +56,6 @@ CREATE TABLE profiles (
 CREATE INDEX idx_profiles_owner_id ON profiles(owner_id);
 
 
-
 CREATE TABLE devices (
     id BIGSERIAL PRIMARY KEY,
     name TEXT NOT NULL CHECK (length(name) > 0 AND length(name) <= 200),
@@ -74,6 +75,7 @@ CREATE TABLE devices (
 
 CREATE INDEX idx_devices_owner_id ON devices(owner_id);
 CREATE INDEX idx_devices_profile_id ON devices(profile_id) WHERE profile_id IS NOT NULL;
+
 
 -- Telemetry events from devices
 CREATE TABLE telemetry (

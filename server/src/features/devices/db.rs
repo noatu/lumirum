@@ -27,6 +27,7 @@ pub struct Device {
 
     pub profile_id: Option<i64>,
     pub owner_id: i64,
+    /// Whether the sub-users will be able to modify the device
     pub is_public: bool,
 
     pub firmware_version: Option<String>,
@@ -45,6 +46,7 @@ pub struct CreateDevice {
     #[schema(example = 1)]
     pub profile_id: Option<i64>,
 
+    /// Whether the sub-users will be able to modify the device
     #[schema(default = true)]
     pub is_public: bool,
 }
@@ -85,31 +87,28 @@ impl Device {
             .ok_or(Error::DeviceNotFound)
     }
 
-    pub async fn list_owner_devices(pool: &PgPool, owner_id: i64) -> Result<Vec<Self>, Error> {
+    pub async fn list_as_owner(pool: &PgPool, owner_id: i64) -> Result<Vec<Self>, Error> {
         Ok(sqlx::query_as!(
             Self,
-            "SELECT * FROM devices WHERE owner_id = $1
-               OR owner_id IN (
-                   SELECT id
-                   FROM users
-                   WHERE parent_id = $1
-               )
-            ORDER BY created_at DESC",
+            "SELECT * FROM devices WHERE owner_id = $1 OR (
+                owner_id IN (SELECT id FROM users WHERE parent_id = $1)
+                AND is_public = true
+             ) ORDER BY created_at DESC",
             owner_id
         )
         .fetch_all(pool)
         .await?)
     }
-    pub async fn list_user_devices(
+    pub async fn list_as_user(
         pool: &PgPool,
         user_id: i64,
         parent_id: i64,
     ) -> Result<Vec<Self>, Error> {
         Ok(sqlx::query_as!(
             Self,
-            "SELECT * FROM devices
-             WHERE owner_id = $1 OR ( owner_id = $2 AND is_public = true )
-             ORDER BY created_at DESC",
+            "SELECT * FROM devices WHERE owner_id = $1 OR (
+                owner_id = $2 AND is_public = true
+             ) ORDER BY created_at DESC",
             user_id,
             parent_id,
         )
@@ -117,7 +116,6 @@ impl Device {
         .await?)
     }
 
-    /// Transactional update helper
     pub async fn update<F>(pool: &PgPool, id: i64, func: F) -> Result<Self, Error>
     where
         F: FnOnce(&mut Self) -> Result<bool, Error>,
@@ -135,13 +133,6 @@ impl Device {
         if !updated {
             return Ok(device);
         }
-
-        //     pub name: String,
-        //     pub secret_key: String,
-        //     pub profile_id: Option<i64>,
-        //     pub is_public: bool,
-        //     pub firmware_version: Option<String>,
-        //     pub last_seen: Option<DateTime<Utc>>,
 
         let device = sqlx::query_as!(
             Self,
@@ -175,7 +166,6 @@ impl Device {
     {
         let mut tx = pool.begin().await?;
 
-        // We select for update to ensure concurrency safety during permission checks
         let mut device = sqlx::query_as!(
             Self,
             r#"SELECT

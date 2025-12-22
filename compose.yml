@@ -13,16 +13,18 @@ services:
 
   app:
     image: rustlang/rust:nightly
-    working_dir: /app
-    volumes:
-      - .:/app
-      - cargo-cache:/usr/local/cargo/registry
     ports:
       - 3000:3000
     environment:
       JWT_SECRET: "not so secret"
       BIND_ADDRESS: "0.0.0.0:3000"
       DATABASE_URL: postgres://postgres:password@database:5432/data
+      CARGO_TARGET_DIR: ../docker-target
+    working_dir: /app
+    volumes:
+      - .:/app:ro
+      - cargo-cache:/usr/local/cargo/registry
+      - build-output:/docker-target
     command: cargo run --release
     depends_on:
       - database
@@ -30,3 +32,4 @@ services:
 volumes:
   data:
   cargo-cache:
+  build-output:

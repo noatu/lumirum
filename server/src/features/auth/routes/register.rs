@@ -27,7 +27,10 @@ use crate::{
             Role,
             User,
         },
-        jwt::sign,
+        jwt::{
+            MaybeAuthenticated,
+            sign,
+        },
     },
     responses::Register,
 };
@@ -43,19 +46,32 @@ pub struct RegisterRequest {
     pub password: String,
 }
 
-/// Register a new user
+/// Register a new account
+///
+/// If an optional JWT is provided for authentication,
+/// a user with a role one step down will be created.
 #[utoipa::path(
     post,
     path = "/register",
     request_body = RegisterRequest,
     responses(Register),
     tag = TAG,
-    // security((), ("jwt" = [])) TODO: register other users
+    security((), ("jwt" = []))
 )]
 pub async fn register(
     State(state): State<AppState>,
+    MaybeAuthenticated(auth): MaybeAuthenticated,
     Validated(payload): Validated<RegisterRequest>,
 ) -> Result<(StatusCode, Json<AuthResponse>), Error> {
+    let role = match auth {
+        None => Role::Owner,
+        Some(auth) => match auth.role {
+            Role::Admin => Role::Owner,
+            Role::Owner => Role::User(auth.id),
+            Role::User(_) => return Err(Error::UsersCannotCreateUsers),
+        },
+    };
+
     let password_hash = Argon2::default()
         .hash_password(
             payload.password.as_bytes(),
@@ -63,8 +79,8 @@ pub async fn register(
         )?
         .to_string();
 
-    let user = User::create(&state.pool, &payload.username, &password_hash, Role::Owner).await?;
-
+    let user = User::create(&state.pool, &payload.username, &password_hash, role).await?;
     let token = sign(user.id, user.role, &state.jwt_secret)?;
+
     Ok((StatusCode::CREATED, Json(AuthResponse { user, token })))
 }

@@ -6,7 +6,7 @@ members = ["server"]
 lto = true
 
 [profile.dev]
-opt-level = 1
+opt-level = 0
 debug = "line-tables-only"
 
 [profile.dev.package."*"]

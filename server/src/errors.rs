@@ -6,6 +6,10 @@ use axum::{
         Response,
     },
 };
+use axum_extra::typed_header::{
+    TypedHeaderRejection,
+    TypedHeaderRejectionReason,
+};
 use serde_json::json;
 use strum::IntoStaticStr;
 use thiserror::Error;
@@ -19,8 +23,8 @@ pub enum Error {
     ProfileNameTaken,
     #[error("device name is already in use")]
     DeviceNameTaken,
-    #[error("cannot delete last administrator account")]
-    CannotDeleteLastAdmin,
+    #[error("cannot delete an administrator account")]
+    CannotDeleteAnAdmin,
 
     #[error("credentials are wrong")]
     UserNotFound, // NOTE: IntoStaticStr leaks this detail
@@ -38,10 +42,14 @@ pub enum Error {
     #[error("token has expired")]
     TokenExpired,
 
-    #[error("cannot modify a parent profile")]
-    CannotModifyParentProfile,
+    #[error("sub-user cannot create another user")]
+    UsersCannotCreateUsers,
+    #[error("cannot set others' prfile as private")]
+    CannotSetOthersProfilePrivate,
     #[error("cannot set others' device as private")]
     CannotSetOthersDevicePrivate,
+    #[error("users cannot regenerate an owner's device key")]
+    CannotChangeDeviceKey,
 
     #[error(transparent)]
     InvalidData(#[from] garde::Report),
@@ -65,7 +73,7 @@ impl From<&Error> for StatusCode {
             Error::UsernameTaken
             | Error::ProfileNameTaken
             | Error::DeviceNameTaken
-            | Error::CannotDeleteLastAdmin => Self::CONFLICT,
+            | Error::CannotDeleteAnAdmin => Self::CONFLICT,
 
             Error::UserNotFound
             | Error::WrongCredentials
@@ -73,9 +81,10 @@ impl From<&Error> for StatusCode {
             | Error::InvalidToken
             | Error::TokenExpired => Self::UNAUTHORIZED,
 
-            Error::CannotModifyParentProfile | Error::CannotSetOthersDevicePrivate => {
-                Self::FORBIDDEN
-            }
+            Error::UsersCannotCreateUsers
+            | Error::CannotSetOthersProfilePrivate
+            | Error::CannotSetOthersDevicePrivate
+            | Error::CannotChangeDeviceKey => Self::FORBIDDEN,
 
             Error::ProfileNotFound | Error::DeviceNotFound => Self::NOT_FOUND,
 
@@ -113,6 +122,15 @@ impl From<sqlx::Error> for Error {
             };
         }
         Self::Database(error)
+    }
+}
+
+impl From<TypedHeaderRejection> for Error {
+    fn from(value: TypedHeaderRejection) -> Self {
+        match value.reason() {
+            TypedHeaderRejectionReason::Missing => Self::MissingCredentials,
+            _ => Self::InvalidToken,
+        }
     }
 }
 

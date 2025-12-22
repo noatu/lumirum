@@ -1,6 +1,6 @@
 {
   "db_name": "PostgreSQL",
-  "query": "SELECT * FROM devices\n             WHERE owner_id = $1 OR ( owner_id = $2 AND is_public = true )\n             ORDER BY created_at DESC",
+  "query": "SELECT * FROM devices WHERE owner_id = $1 OR (\n                owner_id = $2 AND is_public = true\n             ) ORDER BY created_at DESC",
   "describe": {
     "columns": [
       {
@@ -67,5 +67,5 @@
       false
     ]
   },
-  "hash": "9be297bd78bffc047f8d9ad14d8fe18f4849d9d238ea5b69c381cecea521287a"
+  "hash": "74331e24fdbd69a57a3f1001e34d4eeadb3549592fd75b656ff3d2b99f6618ca"
 }
