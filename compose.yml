@@ -20,6 +20,7 @@ services:
       BIND_ADDRESS: "0.0.0.0:3000"
       DATABASE_URL: postgres://postgres:password@database:5432/data
       CARGO_TARGET_DIR: ../docker-target
+      SQLX_OFFLINE: true
     working_dir: /app
     volumes:
       - .:/app:ro
