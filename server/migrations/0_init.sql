@@ -59,7 +59,7 @@ CREATE INDEX idx_profiles_owner_id ON profiles(owner_id);
 CREATE TABLE devices (
     id BIGSERIAL PRIMARY KEY,
     name TEXT NOT NULL CHECK (length(name) > 0 AND length(name) <= 200),
-    secret_key TEXT NOT NULL, -- device auth token
+    secret_key TEXT NOT NULL UNIQUE, -- device auth token
 
     profile_id BIGINT REFERENCES profiles(id) ON DELETE SET NULL,
     owner_id BIGINT NOT NULL REFERENCES users(id) ON DELETE CASCADE,
@@ -85,11 +85,11 @@ CREATE TABLE telemetry (
     event_type TEXT NOT NULL, -- 'motion_detected', 'light_on', 'light_off', etc.
     motion_detected BOOLEAN,
     light_is_on BOOLEAN,
-    brightness INTEGER CHECK (brightness BETWEEN 0 AND 100),
-    color_temp INTEGER CHECK (color_temp BETWEEN 1800 AND 10000),
+    brightness SMALLINT CHECK (brightness BETWEEN 0 AND 100),
+    color_temp SMALLINT CHECK (color_temp BETWEEN 1800 AND 10000),
 
     -- Sensor data
-    ambient_light INTEGER, -- photoresistor ADC value
+    ambient_light SMALLINT, -- photoresistor ADC value
 
     created_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
 );

@@ -3,6 +3,7 @@ use crate::features::{
     auth::AuthResponse,
     devices::Device,
     profiles::Profile,
+    telemetry::Telemetry,
 };
 use error_set::error_set;
 use utoipa::{
@@ -80,7 +81,9 @@ error_set! {
         /// Login successful
         #[response(status = OK)]
         Success(AuthResponse),
-
+        /// Username not found
+        #[response(status = NOT_FOUND)]
+        NotFound(ErrorResponse),
     }
 
     #[derive(IntoResponses)]
@@ -114,7 +117,7 @@ error_set! {
     #[derive(IntoResponses)]
     #[skip(Error,Display,Debug)]
     GetProfile := InternalServerError || Unauthorized || {
-        /// Get profile information
+        /// Got profile information successfully
         #[response(status = OK)]
         Success(Profile),
         /// Profile does not exist
@@ -124,7 +127,7 @@ error_set! {
     #[derive(IntoResponses)]
     #[skip(Error,Display,Debug)]
     GetProfiles := InternalServerError || Unauthorized || {
-        /// Get all profiles information
+        /// Got all profiles information successfully
         #[response(status = OK)]
         Success(Vec<Profile>),
     }
@@ -181,14 +184,14 @@ error_set! {
     #[derive(IntoResponses)]
     #[skip(Error,Display,Debug)]
     GetDevice := InternalServerError || Unauthorized || DeviceNotFound || {
-        /// Get device information
+        /// Got device information successfully
         #[response(status = OK)]
         Success(Device),
     }
     #[derive(IntoResponses)]
     #[skip(Error,Display,Debug)]
     GetDevices := InternalServerError || Unauthorized || {
-        /// Get all devices
+        /// Got all devices successfully
         #[response(status = OK)]
         Success(Vec<Device>),
     }
@@ -221,9 +224,9 @@ error_set! {
         /// Device deleted successfully
         #[response(status = NO_CONTENT)]
         Success,
-        /// Cannot delete this device
-        #[response(status = FORBIDDEN)]
-        Forbidden(ErrorResponse),
+        // /// Cannot delete this device
+        // #[response(status = FORBIDDEN)]
+        // Forbidden(ErrorResponse),
     }
     #[derive(IntoResponses)]
     #[skip(Error,Display,Debug)]
@@ -234,5 +237,54 @@ error_set! {
         /// Users cannot regenerate an Owner's device key
         #[response(status = FORBIDDEN)]
         Forbidden(ErrorResponse),
+    }
+
+
+    // TELEMETRY
+
+    #[derive(IntoResponses)]
+    #[skip(Error,Display,Debug)]
+    GetOneTelemetry := InternalServerError || Unauthorized || {
+        /// Got telemetry information successfully
+        #[response(status = OK)]
+        Success(Telemetry),
+        /// Telemetry does not exist
+        #[response(status = NOT_FOUND)]
+        NotFound(ErrorResponse),
+    }
+    #[derive(IntoResponses)]
+    #[skip(Error,Display,Debug)]
+    GetTelemetry := InternalServerError || Unauthorized || {
+        /// Got telemetry information successfully
+        #[response(status = OK)]
+        Success(Vec<Telemetry>),
+    }
+    #[derive(IntoResponses)]
+    #[skip(Error,Display,Debug)]
+    GetDeviceTelemetry := InternalServerError || Unauthorized || {
+        /// Got telemetry information successfully
+        #[response(status = OK)]
+        Success(Vec<Telemetry>),
+    }
+
+    #[derive(IntoResponses)]
+    #[skip(Error,Display,Debug)]
+    PostTelemetry := ValidInternalAuth || {
+        /// Telemetry created successfully
+        #[response(status = CREATED)]
+        Success(Telemetry),
+        /// Telemetry name is taken
+        #[response(status = CONFLICT)]
+        TelemetryNameTaken(ErrorResponse),
+    }
+    #[derive(IntoResponses)]
+    #[skip(Error,Display,Debug)]
+    DeleteTelemetry := InternalServerError || Unauthorized || {
+        /// Telemetry deleted successfully
+        #[response(status = OK)]
+        Success(u64),
+        /// Telemetry does not exist
+        #[response(status = NOT_FOUND)]
+        NotFound(ErrorResponse),
     }
 }

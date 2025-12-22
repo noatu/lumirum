@@ -56,7 +56,7 @@ impl Device {
     fn generate_key() -> String {
         rand::rng()
             .sample_iter(&Alphanumeric)
-            .take(32)
+            .take(64)
             .map(char::from)
             .collect()
     }
@@ -86,7 +86,14 @@ impl Device {
             .await?
             .ok_or(Error::DeviceNotFound)
     }
+    pub async fn get_by_secret_key(pool: &PgPool, secret: &str) -> Result<Option<Self>, Error> {
+        sqlx::query_as!(Self, "SELECT * FROM devices WHERE secret_key = $1", secret)
+            .fetch_optional(pool)
+            .await
+            .map_err(Into::into)
+    }
 
+    /// Get owner's devices and their users' public devices
     pub async fn list_as_owner(pool: &PgPool, owner_id: i64) -> Result<Vec<Self>, Error> {
         Ok(sqlx::query_as!(
             Self,
@@ -99,6 +106,8 @@ impl Device {
         .fetch_all(pool)
         .await?)
     }
+
+    /// Get user's devices and their parent's public devices
     pub async fn list_as_user(
         pool: &PgPool,
         user_id: i64,

@@ -1,0 +1,16 @@
+{
+  "db_name": "PostgreSQL",
+  "query": "DELETE FROM telemetry WHERE device_id = $1 AND created_at >= $2 AND created_at < $3",
+  "describe": {
+    "columns": [],
+    "parameters": {
+      "Left": [
+        "Int8",
+        "Timestamptz",
+        "Timestamptz"
+      ]
+    },
+    "nullable": []
+  },
+  "hash": "b9dcc7f0b438c141b3643fc1bc083c43ea8180fff3db7224bcd6d57631a3afef"
+}

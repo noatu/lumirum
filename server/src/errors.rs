@@ -26,12 +26,17 @@ pub enum Error {
     #[error("cannot delete an administrator account")]
     CannotDeleteAnAdmin,
 
+    // NOTE: register tells that username is taken,
+    // so it's ok if login tells that username is not found
     #[error("credentials are wrong")]
-    UserNotFound, // NOTE: IntoStaticStr leaks this detail
+    UserNotFound,
+
     #[error("profile does not exist")]
     ProfileNotFound,
     #[error("device does not exist")]
     DeviceNotFound,
+    #[error("telemetry does not exist")]
+    TelemetryNotFound,
 
     #[error("credentials are wrong")]
     WrongCredentials,
@@ -75,8 +80,7 @@ impl From<&Error> for StatusCode {
             | Error::DeviceNameTaken
             | Error::CannotDeleteAnAdmin => Self::CONFLICT,
 
-            Error::UserNotFound
-            | Error::WrongCredentials
+            Error::WrongCredentials
             | Error::MissingCredentials
             | Error::InvalidToken
             | Error::TokenExpired => Self::UNAUTHORIZED,
@@ -86,7 +90,10 @@ impl From<&Error> for StatusCode {
             | Error::CannotSetOthersDevicePrivate
             | Error::CannotChangeDeviceKey => Self::FORBIDDEN,
 
-            Error::ProfileNotFound | Error::DeviceNotFound => Self::NOT_FOUND,
+            Error::UserNotFound
+            | Error::ProfileNotFound
+            | Error::DeviceNotFound
+            | Error::TelemetryNotFound => Self::NOT_FOUND,
 
             Error::InvalidJson(_) => Self::BAD_REQUEST,
             Error::InvalidData(_) => Self::UNPROCESSABLE_ENTITY,

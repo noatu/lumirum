@@ -88,6 +88,7 @@ impl From<User> for DbUser {
 }
 
 impl User {
+    /// Checks if the `child_id` is a child of `parent_id`.
     pub async fn is_child(pool: &PgPool, child_id: i64, parent_id: i64) -> Result<bool, Error> {
         Ok(sqlx::query_scalar!(
             "SELECT 1 FROM users WHERE id = $1 AND parent_id = $2",

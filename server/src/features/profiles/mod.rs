@@ -32,6 +32,7 @@ use crate::{
 mod db;
 
 use db::CreateProfile;
+
 pub use db::Profile;
 
 pub const TAG: &str = "Profiles";
@@ -169,12 +170,12 @@ pub async fn put(
 )]
 pub async fn delete(
     State(state): State<AppState>,
-    user: Authenticated,
+    auth: Authenticated,
     Path(id): Path<i64>,
 ) -> Result<StatusCode, Error> {
-    Profile::delete(&state.pool, id, |profile| match user.role {
+    Profile::delete(&state.pool, id, |profile| match auth.role {
         Role::Admin => Ok(true),
-        Role::Owner | Role::User(_) if profile.owner_id == user.id => Ok(true),
+        Role::Owner | Role::User(_) if profile.owner_id == auth.id => Ok(true),
         _ => Err(Error::ProfileNotFound),
     })
     .await?;

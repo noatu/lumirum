@@ -1,0 +1,70 @@
+{
+  "db_name": "PostgreSQL",
+  "query": "SELECT * FROM telemetry WHERE id = $1",
+  "describe": {
+    "columns": [
+      {
+        "ordinal": 0,
+        "name": "id",
+        "type_info": "Int8"
+      },
+      {
+        "ordinal": 1,
+        "name": "device_id",
+        "type_info": "Int8"
+      },
+      {
+        "ordinal": 2,
+        "name": "event_type",
+        "type_info": "Text"
+      },
+      {
+        "ordinal": 3,
+        "name": "motion_detected",
+        "type_info": "Bool"
+      },
+      {
+        "ordinal": 4,
+        "name": "light_is_on",
+        "type_info": "Bool"
+      },
+      {
+        "ordinal": 5,
+        "name": "brightness",
+        "type_info": "Int2"
+      },
+      {
+        "ordinal": 6,
+        "name": "color_temp",
+        "type_info": "Int2"
+      },
+      {
+        "ordinal": 7,
+        "name": "ambient_light",
+        "type_info": "Int2"
+      },
+      {
+        "ordinal": 8,
+        "name": "created_at",
+        "type_info": "Timestamptz"
+      }
+    ],
+    "parameters": {
+      "Left": [
+        "Int8"
+      ]
+    },
+    "nullable": [
+      false,
+      false,
+      false,
+      true,
+      true,
+      true,
+      true,
+      true,
+      false
+    ]
+  },
+  "hash": "51af96c4df3e27256fb6b3911a39890e0ce3eabcd9c82cb69e127d2ed1ea8861"
+}

@@ -1,7 +1,17 @@
 #![allow(clippy::needless_for_each)] // HACK: OpenApi macro silencing
 
 use axum::Router;
-use utoipa::OpenApi;
+use utoipa::{
+    Modify,
+    OpenApi,
+    openapi::security::{
+        ApiKey,
+        ApiKeyValue,
+        Http,
+        HttpAuthScheme,
+        SecurityScheme,
+    },
+};
 use utoipa_axum::router::OpenApiRouter;
 use utoipa_scalar::{
     Scalar,
@@ -13,7 +23,6 @@ use crate::{
         auth::{
             self,
             AuthResponse,
-            SecurityAddon,
         },
         devices::{
             self,
@@ -24,6 +33,10 @@ use crate::{
             Profile,
         },
         system,
+        telemetry::{
+            self,
+            Telemetry,
+        },
     },
     responses::ErrorResponse,
 };
@@ -36,7 +49,7 @@ use crate::{
         version = env!("CARGO_PKG_VERSION"),
         description = "LumiRum OpenAPI Specification",
     ),
-    components(schemas(ErrorResponse, AuthResponse, Profile, Device))
+    components(schemas(ErrorResponse, AuthResponse, Profile, Device, Telemetry))
 )]
 struct ApiDoc;
 
@@ -46,8 +59,26 @@ pub fn router() -> Router<crate::AppState> {
         .nest("/auth", auth::router()) // TODO: manual user creation
         .nest("/profiles", profiles::router())
         .nest("/devices", devices::router())
+        .nest("/telemetry", telemetry::router())
         .split_for_parts();
 
     tracing::info!("Scalar is available at /");
     router.merge(Scalar::with_url("/", api))
+}
+
+pub struct SecurityAddon;
+
+impl Modify for SecurityAddon {
+    fn modify(&self, openapi: &mut utoipa::openapi::OpenApi) {
+        if let Some(components) = openapi.components.as_mut() {
+            components.add_security_scheme(
+                "jwt",
+                SecurityScheme::Http(Http::new(HttpAuthScheme::Bearer)),
+            );
+            components.add_security_scheme(
+                "api_key",
+                SecurityScheme::ApiKey(ApiKey::Header(ApiKeyValue::new("x-api-key"))),
+            );
+        }
+    }
 }

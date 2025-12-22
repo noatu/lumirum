@@ -30,10 +30,12 @@ use crate::{
     },
 };
 
+mod auth;
 mod db;
 
 use db::CreateDevice;
 
+pub use auth::AuthDevice;
 pub use db::Device;
 
 pub const TAG: &str = "Devices";

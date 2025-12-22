@@ -123,6 +123,7 @@ impl Profile {
             .ok_or(Error::ProfileNotFound)
     }
 
+    /// Get owner's devices and their users' public devices
     pub async fn list_as_owner(pool: &PgPool, owner_id: i64) -> Result<Vec<Self>, Error> {
         Ok(sqlx::query_as!(
             Self,
@@ -135,6 +136,8 @@ impl Profile {
         .fetch_all(pool)
         .await?)
     }
+
+    /// Get user's devices and their parent's public devices
     pub async fn list_as_user(
         pool: &PgPool,
         user_id: i64,

@@ -2,18 +2,7 @@ use serde::Serialize;
 use sqlx::FromRow;
 use utoipa::{
     IntoResponses,
-    Modify,
     ToSchema,
-    openapi::{
-        OpenApi,
-        security::{
-            ApiKey,
-            ApiKeyValue,
-            Http,
-            HttpAuthScheme,
-            SecurityScheme,
-        },
-    },
 };
 use utoipa_axum::{
     router::OpenApiRouter,
@@ -55,21 +44,4 @@ pub struct AuthResponse {
     #[serde(flatten)]
     user: db::User,
     token: String,
-}
-
-pub struct SecurityAddon;
-
-impl Modify for SecurityAddon {
-    fn modify(&self, openapi: &mut OpenApi) {
-        if let Some(components) = openapi.components.as_mut() {
-            components.add_security_scheme(
-                "jwt",
-                SecurityScheme::Http(Http::new(HttpAuthScheme::Bearer)),
-            );
-            components.add_security_scheme(
-                "api_key",
-                SecurityScheme::ApiKey(ApiKey::Header(ApiKeyValue::new("x-api-key"))),
-            );
-        }
-    }
 }

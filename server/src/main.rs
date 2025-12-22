@@ -17,6 +17,7 @@ mod features {
     pub mod devices;
     pub mod profiles;
     pub mod system;
+    pub mod telemetry;
 }
 
 #[derive(Clone)]
