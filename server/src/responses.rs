@@ -3,6 +3,7 @@ use crate::features::{
     auth::AuthResponse,
     devices::Device,
     profiles::Profile,
+    system::Stats,
     telemetry::Telemetry,
 };
 use error_set::error_set;
@@ -63,6 +64,15 @@ error_set! {
         #[response(status = CONFLICT)]
         UsernameTaken(ErrorResponse),
     }
+
+    #[derive(IntoResponses)]
+    #[skip(Error,Display,Debug)]
+    StatsResponse := InternalServerError || Unauthorized || {
+        /// Stats retrieved successfully
+        #[response(status = OK)]
+        Success(Stats),
+    }
+
 
     #[derive(IntoResponses)]
     #[skip(Error,Display,Debug)]

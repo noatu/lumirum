@@ -24,7 +24,7 @@ pub struct HealthResponse {
     timestamp: chrono::DateTime<chrono::Utc>,
 }
 
-/// Check if the server is up and running
+/// Check if the server is up
 #[utoipa::path(get, path = "/health", responses(HealthResponse), tag = super::TAG)]
 pub async fn health(State(state): State<crate::AppState>) -> Json<HealthResponse> {
     let db_connected = sqlx::query("SELECT 1").execute(&state.pool).await.is_ok();

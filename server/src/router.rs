@@ -32,7 +32,10 @@ use crate::{
             self,
             Profile,
         },
-        system,
+        system::{
+            self,
+            Stats,
+        },
         telemetry::{
             self,
             Telemetry,
@@ -49,7 +52,7 @@ use crate::{
         version = env!("CARGO_PKG_VERSION"),
         description = "LumiRum OpenAPI Specification",
     ),
-    components(schemas(ErrorResponse, AuthResponse, Profile, Device, Telemetry))
+    components(schemas(ErrorResponse, Stats, AuthResponse, Profile, Device, Telemetry))
 )]
 struct ApiDoc;
 

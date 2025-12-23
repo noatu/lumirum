@@ -4,9 +4,14 @@ use utoipa_axum::{
 };
 
 mod health;
+mod stats;
+
+pub use stats::Stats;
 
 pub const TAG: &str = "System";
 
 pub fn router() -> OpenApiRouter<crate::AppState> {
-    OpenApiRouter::new().routes(routes!(health::health))
+    OpenApiRouter::new()
+        .routes(routes!(health::health))
+        .routes(routes!(stats::stats))
 }
