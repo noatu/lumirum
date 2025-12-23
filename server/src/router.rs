@@ -24,6 +24,7 @@ use crate::{
             self,
             AuthResponse,
         },
+        circadian::LightingSchedule,
         devices::{
             self,
             Device,
@@ -52,7 +53,7 @@ use crate::{
         version = env!("CARGO_PKG_VERSION"),
         description = "LumiRum OpenAPI Specification",
     ),
-    components(schemas(ErrorResponse, Stats, AuthResponse, Profile, Device, Telemetry))
+    components(schemas(ErrorResponse, Stats, AuthResponse, Profile, Device, Telemetry, LightingSchedule))
 )]
 struct ApiDoc;
 

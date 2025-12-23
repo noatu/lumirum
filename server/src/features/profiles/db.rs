@@ -3,6 +3,7 @@ use chrono::{
     NaiveTime,
     Utc,
 };
+use chrono_tz::Tz;
 use garde::{
     Valid,
     Validate,
@@ -28,7 +29,7 @@ pub struct Profile {
     pub latitude: Option<f64>,
     pub longitude: Option<f64>,
 
-    pub timezone: String, // TODO: chrono-tz
+    pub timezone: String,
 
     #[schema(value_type = String, example = "22:00:00")]
     pub sleep_start: NaiveTime,
@@ -58,8 +59,8 @@ pub struct CreateProfile {
     #[schema(default = true)]
     pub is_shared: bool,
 
-    #[schema(default = "UTC", example = "Europe/Kyiv")]
-    pub timezone: String,
+    #[schema(value_type = String, default = "UTC", example = "Europe/Kyiv")]
+    pub timezone: Tz,
 
     #[schema(value_type = String, example = "22:00:00")]
     pub sleep_start: NaiveTime,
@@ -102,7 +103,7 @@ impl Profile {
             data.name,
             data.latitude,
             data.longitude,
-            data.timezone,
+            data.timezone.to_string(),
             data.sleep_start,
             data.sleep_end,
             data.night_mode_enabled,
@@ -261,8 +262,8 @@ impl Profile {
             self.longitude = new.longitude;
             updated = true;
         }
-        if self.timezone != new.timezone {
-            self.timezone = new.timezone;
+        if self.timezone != new.timezone.to_string() {
+            self.timezone = new.timezone.to_string();
             updated = true;
         }
         if self.sleep_start != new.sleep_start {

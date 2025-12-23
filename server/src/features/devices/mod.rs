@@ -6,6 +6,7 @@ use axum::{
     },
     http::StatusCode,
 };
+use chrono::Duration;
 use utoipa_axum::{
     router::OpenApiRouter,
     routes,
@@ -21,11 +22,16 @@ use crate::{
             Role,
             User,
         },
-        profiles,
+        circadian::LightingSchedule,
+        profiles::{
+            self,
+            Profile,
+        },
     },
     responses::{
         DeleteDevice,
         GetDevice,
+        GetDeviceSchedule,
         GetDevices,
         PostDevice,
         PutDevice,
@@ -45,6 +51,7 @@ pub const TAG: &str = "Devices";
 
 pub fn router() -> OpenApiRouter<AppState> {
     OpenApiRouter::new()
+        .routes(routes!(get_circadian))
         .routes(routes!(post, get_all))
         .routes(routes!(get, put, delete, regenerate_key))
 }
@@ -174,7 +181,7 @@ pub async fn put(
     Ok(Json(device))
 }
 
-/// Regenerate device secret key
+/// Regenerate secret key
 ///
 /// - Owner or User may regenerate the key for their own devices.
 /// - Users may **not** regenerate the key for their Owner's public devices.
@@ -234,4 +241,23 @@ pub async fn delete(
     .await?;
 
     Ok(StatusCode::NO_CONTENT)
+}
+
+/// Get lighting schedule
+#[utoipa::path(
+    get,
+    path = "/circadian",
+    responses(GetDeviceSchedule),
+    tag = TAG,
+    security(("api_key" = []))
+)]
+pub async fn get_circadian(
+    State(state): State<AppState>,
+    AuthDevice(device): AuthDevice,
+) -> Result<Json<Option<LightingSchedule>>, Error> {
+    let Some(profile_id) = device.profile_id else {
+        return Ok(Json(None));
+    };
+    let profile = Profile::get_by_id(&state.pool, profile_id).await?;
+    Ok(Json(Some(profile.calculate(96, Duration::minutes(15))?)))
 }

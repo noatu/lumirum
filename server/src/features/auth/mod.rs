@@ -23,6 +23,7 @@ pub use db::{
     Role,
     User,
 };
+#[allow(unused_imports, reason = "reexports")]
 pub use jwt::{
     AdminAuthenticated,
     Authenticated,

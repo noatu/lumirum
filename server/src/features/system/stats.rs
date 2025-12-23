@@ -15,11 +15,7 @@ use utoipa::{
 use crate::{
     AppState,
     errors::Error,
-    features::auth::{
-        AdminAuthenticated,
-        Authenticated,
-        Role,
-    },
+    features::auth::AdminAuthenticated,
     responses::StatsResponse,
 };
 

@@ -6,6 +6,7 @@ use axum::{
     },
     http::StatusCode,
 };
+use chrono::Duration;
 use utoipa_axum::{
     router::OpenApiRouter,
     routes,
@@ -15,14 +16,18 @@ use crate::{
     AppState,
     errors::Error,
     extractors::Validated,
-    features::auth::{
-        Authenticated,
-        Role,
-        User,
+    features::{
+        auth::{
+            Authenticated,
+            Role,
+            User,
+        },
+        circadian::LightingSchedule,
     },
     responses::{
         DeleteProfile,
         GetProfile,
+        GetProfileSchedule,
         GetProfiles,
         PostProfile,
         PutProfile,
@@ -39,6 +44,7 @@ pub const TAG: &str = "Profiles";
 
 pub fn router() -> OpenApiRouter<AppState> {
     OpenApiRouter::new()
+        .routes(routes!(get_circadian))
         .routes(routes!(post, get_all))
         .routes(routes!(get, put, delete))
 }
@@ -185,4 +191,25 @@ pub async fn delete(
     .await?;
 
     Ok(StatusCode::NO_CONTENT)
+}
+
+/// Get lighting schedule
+///
+/// - Owner or User may get their own ligting schedule.
+/// - Users may get their Owner's shared ligting schedule.
+/// - Owners may get their Users' shared ligting schedule.
+#[utoipa::path(
+    get,
+    path = "/circadian/{id}",
+    responses(GetProfileSchedule),
+    tag = TAG,
+    security(("jwt" = []))
+)]
+pub async fn get_circadian(
+    State(state): State<AppState>,
+    auth: Authenticated,
+    Path(id): Path<i64>,
+) -> Result<Json<LightingSchedule>, Error> {
+    let profile = get_raw(&state, &auth, id).await?;
+    Ok(Json(profile.calculate(96, Duration::minutes(15))?))
 }

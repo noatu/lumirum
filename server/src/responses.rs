@@ -4,6 +4,7 @@ use crate::features::{
         AuthResponse,
         User,
     },
+    circadian::LightingSchedule,
     devices::Device,
     profiles::Profile,
     system::Stats,
@@ -163,6 +164,16 @@ error_set! {
     }
     #[derive(IntoResponses)]
     #[skip(Error,Display,Debug)]
+    GetProfileSchedule := InternalServerError || Unauthorized || {
+        /// Got profile lighting schedule successfully
+        #[response(status = OK)]
+        Success(LightingSchedule),
+        /// Profile does not exist
+        #[response(status = NOT_FOUND)]
+        NotFound(ErrorResponse),
+    }
+    #[derive(IntoResponses)]
+    #[skip(Error,Display,Debug)]
     PostProfile := ValidInternalAuth || {
         /// Profile created successfully
         #[response(status = CREATED)]
@@ -224,6 +235,13 @@ error_set! {
         /// Got all devices successfully
         #[response(status = OK)]
         Success(Vec<Device>),
+    }
+    #[derive(IntoResponses)]
+    #[skip(Error,Display,Debug)]
+    GetDeviceSchedule := InternalServerError || Unauthorized || {
+        /// Got device lighting schedule successfully
+        #[response(status = OK)]
+        Success(Option<LightingSchedule>),
     }
     #[derive(IntoResponses)]
     #[skip(Error,Display,Debug)]
