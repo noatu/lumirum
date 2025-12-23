@@ -191,8 +191,9 @@ impl Profile {
                 night_mode_enabled = $7,
                 min_color_temp = $8,
                 max_color_temp = $9,
-                motion_timeout_seconds = $10
-            WHERE id = $11
+                motion_timeout_seconds = $10,
+                is_shared = $11
+            WHERE id = $12
             RETURNING *
             "#,
             profile.name,
@@ -205,6 +206,7 @@ impl Profile {
             profile.min_color_temp,
             profile.max_color_temp,
             profile.motion_timeout_seconds,
+            profile.is_shared,
             profile.id
         )
         .fetch_one(&mut *tx)

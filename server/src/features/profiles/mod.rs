@@ -60,9 +60,13 @@ pub async fn get(
     auth: Authenticated,
     Path(id): Path<i64>,
 ) -> Result<Json<Profile>, Error> {
+    get_raw(&state, &auth, id).await.map(Json)
+}
+
+pub async fn get_raw(state: &AppState, auth: &Authenticated, id: i64) -> Result<Profile, Error> {
     let profile = Profile::get_by_id(&state.pool, id).await?;
 
-    Ok(Json(match auth.role {
+    Ok(match auth.role {
         Role::Admin => profile,
         Role::Owner | Role::User(_) if profile.owner_id == auth.id => profile,
         Role::User(parent) if profile.owner_id == parent && profile.is_shared => profile,
@@ -73,7 +77,7 @@ pub async fn get(
             profile
         }
         _ => return Err(Error::ProfileNotFound),
-    }))
+    })
 }
 
 /// List all profiles

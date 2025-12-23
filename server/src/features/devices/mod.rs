@@ -15,10 +15,13 @@ use crate::{
     AppState,
     errors::Error,
     extractors::Validated,
-    features::auth::{
-        Authenticated,
-        Role,
-        User,
+    features::{
+        auth::{
+            Authenticated,
+            Role,
+            User,
+        },
+        profiles,
     },
     responses::{
         DeleteDevice,
@@ -111,10 +114,15 @@ pub async fn get_all(
 )]
 pub async fn post(
     State(state): State<AppState>,
-    user: Authenticated,
+    auth: Authenticated,
     Validated(payload): Validated<CreateDevice>,
 ) -> Result<Json<Device>, Error> {
-    Ok(Json(Device::create(&state.pool, user.id, payload).await?))
+    // HACK: permissions check
+    if let Some(id) = payload.profile_id {
+        profiles::get_raw(&state, &auth, id).await?;
+    }
+
+    Ok(Json(Device::create(&state.pool, auth.id, payload).await?))
 }
 
 /// Update a device
@@ -137,6 +145,11 @@ pub async fn put(
     Validated(payload): Validated<CreateDevice>,
 ) -> Result<Json<Device>, Error> {
     let children = User::get_children(&state.pool, auth.id).await?;
+
+    // HACK: permissions check
+    if let Some(id) = payload.profile_id {
+        profiles::get_raw(&state, &auth, id).await?;
+    }
 
     let payload = payload.into_inner();
     let device = Device::update(&state.pool, id, |device| match auth.role {
