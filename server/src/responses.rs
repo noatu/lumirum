@@ -1,6 +1,9 @@
 #![allow(unused)]
 use crate::features::{
-    auth::AuthResponse,
+    auth::{
+        AuthResponse,
+        User,
+    },
     devices::Device,
     profiles::Profile,
     system::Stats,
@@ -65,6 +68,9 @@ error_set! {
         UsernameTaken(ErrorResponse),
     }
 
+
+    // SYSTEM
+
     #[derive(IntoResponses)]
     #[skip(Error,Display,Debug)]
     StatsResponse := InternalServerError || Unauthorized || {
@@ -72,7 +78,23 @@ error_set! {
         #[response(status = OK)]
         Success(Stats),
     }
+    #[derive(IntoResponses)]
+    #[skip(Error,Display,Debug)]
+    GetUser := InternalServerError || Unauthorized || {
+        /// Got user information successfully
+        #[response(status = OK)]
+        Success(User),
+    }
+    #[derive(IntoResponses)]
+    #[skip(Error,Display,Debug)]
+    GetUsers := InternalServerError || Unauthorized || {
+        /// Got users successfully
+        #[response(status = OK)]
+        Success(Vec<User>),
+    }
 
+
+    // ME
 
     #[derive(IntoResponses)]
     #[skip(Error,Display,Debug)]
@@ -84,7 +106,6 @@ error_set! {
         #[response(status = FORBIDDEN)]
         UserCantUser(ErrorResponse),
     }
-
     #[derive(IntoResponses)]
     #[skip(Error,Display,Debug)]
     Login := ValidInternalAuth || {
@@ -95,7 +116,6 @@ error_set! {
         #[response(status = NOT_FOUND)]
         NotFound(ErrorResponse),
     }
-
     #[derive(IntoResponses)]
     #[skip(Error,Display,Debug)]
     GetMe := InternalServerError || Unauthorized || {
@@ -118,7 +138,7 @@ error_set! {
         Success,
         /// Cannot delete administrator account
         #[response(status = CONFLICT)]
-        LastAdmin(ErrorResponse),
+        Admin(ErrorResponse),
     }
 
 

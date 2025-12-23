@@ -106,6 +106,23 @@ impl FromRequestParts<AppState> for Authenticated {
     }
 }
 
+pub struct AdminAuthenticated(pub Authenticated);
+
+impl FromRequestParts<AppState> for AdminAuthenticated {
+    type Rejection = Error;
+
+    async fn from_request_parts(
+        parts: &mut Parts,
+        state: &AppState,
+    ) -> Result<Self, Self::Rejection> {
+        let auth = Authenticated::from_request_parts(parts, state).await?;
+        if auth.role != Role::Admin {
+            return Err(Error::WrongCredentials);
+        }
+        Ok(Self(auth))
+    }
+}
+
 pub struct MaybeAuthenticated(pub Option<Authenticated>);
 
 impl FromRequestParts<AppState> for MaybeAuthenticated {

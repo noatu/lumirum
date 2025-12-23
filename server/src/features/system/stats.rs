@@ -16,6 +16,7 @@ use crate::{
     AppState,
     errors::Error,
     features::auth::{
+        AdminAuthenticated,
         Authenticated,
         Role,
     },
@@ -37,11 +38,8 @@ pub struct Stats {
 #[utoipa::path(get, path = "/stats", responses(StatsResponse), tag = super::TAG)]
 pub async fn stats(
     State(state): State<AppState>,
-    auth: Authenticated,
+    AdminAuthenticated(_auth): AdminAuthenticated,
 ) -> Result<Json<Stats>, Error> {
-    if auth.role != Role::Admin {
-        return Err(Error::WrongCredentials);
-    }
     Ok(Json(Stats {
         users: sqlx::query_scalar!("SELECT COUNT(id) AS \"c!\" FROM users")
             .fetch_one(&state.pool)

@@ -2,6 +2,7 @@ use chrono::{
     DateTime,
     Utc,
 };
+use futures::TryStreamExt;
 use serde::{
     Deserialize,
     Serialize,
@@ -159,6 +160,20 @@ impl User {
         .await?
         .ok_or(Error::UserNotFound)?
         .try_into()
+    }
+    pub async fn get_all(pool: &PgPool) -> Result<Vec<Self>, Error> {
+        let mut users = Vec::new();
+
+        let mut stream = sqlx::query_as!(
+            DbUser,
+            r#"SELECT id, username, password_hash, role AS "role: DbRole", parent_id, created_at FROM users"#
+        ).fetch(pool);
+
+        while let Some(user) = stream.try_next().await? {
+            users.push(user.try_into()?);
+        }
+
+        Ok(users)
     }
 
     pub async fn update<F>(pool: &PgPool, id: i64, func: F) -> Result<Self, Error>

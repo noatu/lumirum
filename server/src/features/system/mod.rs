@@ -5,6 +5,7 @@ use utoipa_axum::{
 
 mod health;
 mod stats;
+mod users;
 
 pub use stats::Stats;
 
@@ -14,4 +15,10 @@ pub fn router() -> OpenApiRouter<crate::AppState> {
     OpenApiRouter::new()
         .routes(routes!(health::health))
         .routes(routes!(stats::stats))
+        .nest(
+            "/users",
+            OpenApiRouter::new()
+                .routes(routes!(users::get, users::delete))
+                .routes(routes!(users::get_all)),
+        )
 }

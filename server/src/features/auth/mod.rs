@@ -23,7 +23,11 @@ pub use db::{
     Role,
     User,
 };
-pub use jwt::Authenticated;
+pub use jwt::{
+    AdminAuthenticated,
+    Authenticated,
+    MaybeAuthenticated,
+};
 
 pub const TAG: &str = "Authentication";
 
