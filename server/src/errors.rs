@@ -70,8 +70,8 @@ pub enum Error {
     Jwt(#[from] jsonwebtoken::errors::Error),
     #[error("data corrupted: {0}")]
     DataCorruption(String),
-    #[error("invalide timezone: {0}")]
-    InvalidTimeZone(#[from] chrono_tz::ParseError),
+    #[error("invalide time: {0}")]
+    InvalidTime(#[from] chrono_tz::ParseError),
 }
 
 impl From<&Error> for StatusCode {
@@ -104,7 +104,7 @@ impl From<&Error> for StatusCode {
             | Error::PasswordHash(_)
             | Error::Jwt(_)
             | Error::DataCorruption(_)
-            | Error::InvalidTimeZone(_) => Self::INTERNAL_SERVER_ERROR,
+            | Error::InvalidTime(_) => Self::INTERNAL_SERVER_ERROR,
         }
     }
 }

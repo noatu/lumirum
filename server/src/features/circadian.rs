@@ -3,6 +3,7 @@ use chrono::{
     Duration,
     NaiveDate,
     NaiveTime,
+    Offset,
     TimeZone,
     Timelike,
     Utc,
@@ -29,14 +30,18 @@ use crate::{
 pub struct LightingSchedule {
     pub profile_id: i64,
 
-    #[schema(value_type = String)]
-    pub timezone: Tz,
-    #[schema(value_type = String, example = "22:00:00")]
-    pub sleep_start: NaiveTime,
-    #[schema(value_type = String, example = "07:00:00")]
-    pub sleep_end: NaiveTime,
+    /// Seconds since midnight UTC when sleep starts
+    pub sleep_start_utc_seconds: u32,
+    /// Seconds since midnight UTC when sleep ends
+    pub sleep_end_utc_seconds: u32,
+
+    /// In Kelvin
+    pub min_color_temp: i32,
+    /// In Kelvin
+    pub max_color_temp: i32,
 
     pub night_mode_enabled: bool,
+    pub motion_timeout_seconds: i32,
 
     pub generated_at: DateTime<Utc>,
     pub valid_until: DateTime<Utc>,
@@ -53,6 +58,25 @@ pub struct LightingPoint {
     /// Color temperature in Kelvin
     #[serde(rename = "temp")]
     pub color_temp: i32,
+}
+
+/// Convert local time to seconds since midnight UTC
+fn to_utc_seconds_from_midnight(local_time: NaiveTime, timezone: Tz) -> u32 {
+    let now_in_tz = Utc::now().with_timezone(&timezone);
+    let today_naive = now_in_tz.date_naive();
+
+    let local_naive_dt = today_naive.and_time(local_time);
+
+    match timezone.from_local_datetime(&local_naive_dt) {
+        chrono::LocalResult::Single(dt) | chrono::LocalResult::Ambiguous(dt, _) => {
+            dt.with_timezone(&Utc).num_seconds_from_midnight()
+        }
+        chrono::LocalResult::None => {
+            let offset_seconds = now_in_tz.offset().fix().local_minus_utc();
+            let forced_utc = local_naive_dt - chrono::Duration::seconds(offset_seconds.into());
+            forced_utc.num_seconds_from_midnight()
+        }
+    }
 }
 
 impl Profile {
@@ -72,11 +96,12 @@ impl Profile {
 
         Ok(LightingSchedule {
             profile_id: self.id,
-            timezone,
-            sleep_start: self.sleep_start,
-            sleep_end: self.sleep_end,
+            sleep_start_utc_seconds: to_utc_seconds_from_midnight(self.sleep_start, timezone),
+            sleep_end_utc_seconds: to_utc_seconds_from_midnight(self.sleep_end, timezone),
+            min_color_temp: self.min_color_temp,
+            max_color_temp: self.max_color_temp,
             night_mode_enabled: self.night_mode_enabled,
-
+            motion_timeout_seconds: self.motion_timeout_seconds,
             generated_at: now,
             valid_until: now + offset * points.into(),
             schedule,
@@ -173,7 +198,6 @@ impl Profile {
     /// 2. Day -> Sunset (Hold Max)
     /// 3. Sunset -> Pre-Sleep (Max -> Relaxation Temp)
     /// 4. Pre-Sleep -> Sleep (Relaxation Temp -> Min)
-    #[allow(clippy::too_many_arguments)]
     fn interpolate_circadian_curve(
         &self,
         current_minutes: u32,
