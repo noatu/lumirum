@@ -52,7 +52,9 @@ pub struct CreateProfile {
     #[schema(min_length = 1, example = "Living Room")]
     pub name: String,
 
+    #[schema(example = 49.98081)]
     pub latitude: Option<f64>,
+    #[schema(example = 36.25272)]
     pub longitude: Option<f64>,
 
     /// Whether the sub-users will see the profile
@@ -92,15 +94,16 @@ impl Profile {
             Self,
             r#"
             INSERT INTO profiles (
-                owner_id, name, latitude, longitude, timezone,
+                owner_id, name, is_shared, latitude, longitude, timezone,
                 sleep_start, sleep_end, night_mode_enabled,
                 min_color_temp, max_color_temp, motion_timeout_seconds
             )
-            VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11)
+            VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12)
             RETURNING *
             "#,
             owner_id,
             data.name,
+            data.is_shared,
             data.latitude,
             data.longitude,
             data.timezone.to_string(),
