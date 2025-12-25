@@ -146,6 +146,8 @@ impl From<TypedHeaderRejection> for Error {
 
 impl IntoResponse for Error {
     fn into_response(self) -> Response {
+        tracing::trace!("{self}:\n{self:#?}");
+
         let status: StatusCode = (&self).into();
 
         let (code, message) = if status == StatusCode::INTERNAL_SERVER_ERROR {

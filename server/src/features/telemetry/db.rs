@@ -44,7 +44,7 @@ pub struct CreateTelemetry {
     #[schema(minimum = 0, maximum = 100)]
     pub brightness: Option<i16>,
 
-    #[garde(range(min = 1800, max = 1000))]
+    #[garde(range(min = 1800, max = 10000))]
     #[schema(minimum = 1800, maximum = 10000)]
     pub color_temp: Option<i16>,
 
