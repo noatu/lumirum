@@ -1,0 +1,10 @@
+[wokwi]
+version = 1
+rfc2217ServerPort = 4000
+elf = ".pio/build/esp32-c3-devkitm-1/firmware.elf"
+firmware = ".pio/build/esp32-c3-devkitm-1/firmware.bin"
+
+# Forward http://localhost:8180 to port 80 in the simulation
+[[net.forward]]
+from = "localhost:8180"
+to = "target:80"
