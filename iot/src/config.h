@@ -15,7 +15,7 @@
 #define API_KEY_HEADER "x-api-key"
 
 const int API_KEY_LENGTH = 64; // chars
-#define API_DEVICE_KEY "OjEYR18aTyNiKMEP8o7XLDD3Rv47rUVVzPBIsxrdB0iOb3PMMmpcsRPiWIDJdRb2"
+#define API_DEVICE_KEY "GItGdmXxqGdEiDQOXzrzPgX1920KhsC2y1nxffrPeMSggp0DrYRjZwHL3PkWkw9A"
 const bool TELEMETRY = true; // Whether to send telemetry to the API
 
 const int MAX_WIFI_ATTEMPTS = 20;
@@ -38,7 +38,6 @@ const int PWM_MAX_VALUE = 255;     // Standard 8-bit PWM limit
 
 // Timing configuration
 const unsigned long LOOP_DELAY_MS = 50;   // 20Hz refresh rate
-const unsigned long BOOT_DELAY_MS = 1000; // 1 second warm-up
 const unsigned long BUTTON_DEBOUNCE_MS = 200; // 0.2 seconds is enough for a button press
 const unsigned long SCHEDULE_REFRESH_INTERVAL_MS = 3600000; // 1 hour
 const unsigned long TELEMETRY_DEBOUNCE_MS = 2000; // 2 seconds min between sending telemetry events

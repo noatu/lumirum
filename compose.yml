@@ -16,21 +16,31 @@ services:
     ports:
       - 3000:3000
     environment:
-      JWT_SECRET: "not so secret"
-      BIND_ADDRESS: "0.0.0.0:3000"
       DATABASE_URL: postgres://postgres:password@database:5432/data
+      JWT_SECRET_FILE: /run/secrets/jwt
       CARGO_TARGET_DIR: ../docker-target
+      BIND_ADDRESS: "0.0.0.0:3000"
       SQLX_OFFLINE: true
+      RUST_LOG: info
     working_dir: /app
     volumes:
       - .:/app:ro
       - cargo-cache:/usr/local/cargo/registry
       - build-output:/docker-target
-    command: cargo run --release
+      - secrets:/run/secrets
+    command: >
+      sh -c '
+        if [ ! -f "$$JWT_SECRET_FILE" ]; then
+          openssl rand -base64 32 > "$$JWT_SECRET_FILE"
+        fi &&
+        export JWT_SECRET=$$(cat "$$JWT_SECRET_FILE") &&
+        cargo run --release
+      '
     depends_on:
       - database
 
 volumes:
   data:
+  secrets:
   cargo-cache:
   build-output:
