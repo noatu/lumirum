@@ -31,7 +31,13 @@ pub struct Stats {
 }
 
 /// Get stats of the server
-#[utoipa::path(get, path = "/stats", responses(StatsResponse), tag = super::TAG)]
+#[utoipa::path(
+    get,
+    path = "/stats",
+    responses(StatsResponse),
+    tag = super::TAG,
+    security(("jwt" = []))
+)]
 pub async fn stats(
     State(state): State<AppState>,
     AdminAuthenticated(_auth): AdminAuthenticated,
