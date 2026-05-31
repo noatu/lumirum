@@ -16,7 +16,7 @@ services:
       timeout: 5s
       retries: 5
 
-  app:
+  server:
     build:
       context: server
       dockerfile: Dockerfile
@@ -33,6 +33,15 @@ services:
     depends_on:
       database:
         condition: service_healthy
+
+  website:
+    build:
+      context: website
+      dockerfile: Dockerfile
+    ports:
+      - "80:80"
+    depends_on:
+      - server
 
 volumes:
   data:
