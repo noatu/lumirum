@@ -1,0 +1,67 @@
+{
+  "version": 1,
+  "exported_at": "2026-05-20T10:00:00.000Z",
+  "profiles": [
+    {
+      "name": "Morning Person",
+      "timezone": "Europe/Kyiv",
+      "sleep_start": "22:30:00",
+      "sleep_end": "06:30:00",
+      "min_color_temp": 2200,
+      "max_color_temp": 6500,
+      "motion_timeout_seconds": 300,
+      "latitude": 50.4501,
+      "longitude": 30.5234,
+      "is_shared": true,
+      "night_mode_enabled": true
+    },
+    {
+      "name": "Night Owl",
+      "timezone": "Europe/Kyiv",
+      "sleep_start": "02:00:00",
+      "sleep_end": "10:00:00",
+      "min_color_temp": 1900,
+      "max_color_temp": 5500,
+      "motion_timeout_seconds": 600,
+      "latitude": null,
+      "longitude": null,
+      "is_shared": false,
+      "night_mode_enabled": true
+    },
+    {
+      "name": "Office",
+      "timezone": "UTC",
+      "sleep_start": "23:00:00",
+      "sleep_end": "07:00:00",
+      "min_color_temp": 2700,
+      "max_color_temp": 6500,
+      "motion_timeout_seconds": 120,
+      "latitude": null,
+      "longitude": null,
+      "is_shared": true,
+      "night_mode_enabled": false
+    }
+  ],
+  "devices": [
+    {
+      "name": "Living Room Light",
+      "profile_name": "Morning Person",
+      "is_public": true
+    },
+    {
+      "name": "Bedroom Light",
+      "profile_name": "Night Owl",
+      "is_public": false
+    },
+    {
+      "name": "Desk Lamp",
+      "profile_name": "Office",
+      "is_public": true
+    },
+    {
+      "name": "Hallway Light",
+      "profile_name": null,
+      "is_public": true
+    }
+  ]
+}
