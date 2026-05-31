@@ -33,6 +33,10 @@ server: up-dev
 web:
     cd website && npm run dev
 
+# Run Locust load tests against the API gateway
+locust:
+    locust -f locust/locustfile.py --host http://localhost:3000
+
 # Remove build artifacts and caches for all components
 clean:
     rm -rf server/target
