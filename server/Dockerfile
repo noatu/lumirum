@@ -10,7 +10,7 @@ COPY --from=planner /app/recipe.json recipe.json
 RUN cargo chef cook --release --recipe-path recipe.json
 COPY . .
 ARG SEED_DATA=true
-RUN if [ "$SEED_DATA" != "true" ]; then rm server/migrations/1_test-data.sql; fi
+RUN if [ "$SEED_DATA" != "true" ]; then rm migrations/1_test-data.sql; fi
 RUN cargo build --release --bin lumirum-server
 
 FROM debian:bookworm-slim AS runtime

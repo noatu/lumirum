@@ -1,11 +1,8 @@
 .git/
-iot/
 target/
-docker-target/
 .envrc
 rust-toolchain.toml
 rustfmt.toml
 .gitignore
 *.md
 wip/
-compose.yml
