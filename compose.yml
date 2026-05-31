@@ -3,44 +3,36 @@ services:
     image: postgres:18
     restart: unless-stopped
     ports:
-      - 5432:5432
+      - "5433:5432"
     volumes:
       - data:/var/lib/postgresql/
     environment:
       POSTGRES_DB: data
       POSTGRES_PASSWORD: password
       PGDATA: /var/lib/postgresql/pgdata
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U postgres -d data"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
 
   app:
-    image: rustlang/rust:nightly
+    build:
+      context: .
+      dockerfile: Dockerfile
+      args:
+        SEED_DATA: "true"
     ports:
-      - 3000:3000
+      - "3000:3000"
     environment:
       DATABASE_URL: postgres://postgres:password@database:5432/data
-      JWT_SECRET_FILE: /run/secrets/jwt
-      CARGO_TARGET_DIR: ../docker-target
       BIND_ADDRESS: "0.0.0.0:3000"
-      SQLX_OFFLINE: true
+      SQLX_OFFLINE: "true"
       RUST_LOG: info
-    working_dir: /app
-    volumes:
-      - .:/app:ro
-      - cargo-cache:/usr/local/cargo/registry
-      - build-output:/docker-target
-      - secrets:/run/secrets
-    command: >
-      sh -c '
-        if [ ! -f "$$JWT_SECRET_FILE" ]; then
-          openssl rand -base64 32 > "$$JWT_SECRET_FILE"
-        fi &&
-        export JWT_SECRET=$$(cat "$$JWT_SECRET_FILE") &&
-        cargo run --release
-      '
+      JWT_SECRET: "change-me-in-production"
     depends_on:
-      - database
+      database:
+        condition: service_healthy
 
 volumes:
   data:
-  secrets:
-  cargo-cache:
-  build-output:
