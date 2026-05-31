@@ -1,0 +1,6 @@
+.git/
+server/
+iot/
+mobile/
+website/node_modules/
+website/dist/

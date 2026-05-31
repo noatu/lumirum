@@ -1,0 +1,17 @@
+:80 {
+	@api path /auth* /devices* /profiles* /telemetry* /users* /health* /stats*
+
+	handle @api {
+		reverse_proxy server:3000
+	}
+
+	handle {
+		root * /srv
+		try_files {path} /index.html
+		file_server
+	}
+}
+
+:3000 {
+	reverse_proxy server:3000
+}

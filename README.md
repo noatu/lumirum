@@ -12,10 +12,10 @@ Smart lighting management system. The server exposes a REST API consumed by the 
 Requires [Docker](https://docs.docker.com/get-docker/) and optionally [`just`](https://github.com/casey/just).
 
 ```bash
-just rebuild   # build images and start everything
-just up        # start with existing images
-just down      # stop
-just down-volumes  # stop and wipe the database
+just rebuild      # build images and start everything
+just up           # start with existing images
+just down         # stop
+just down-volumes # stop and wipe the database
 ```
 
 Without `just`, run the underlying commands directly — see the [`Justfile`](Justfile) for the full list.

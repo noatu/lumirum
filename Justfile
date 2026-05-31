@@ -2,16 +2,16 @@ default:
     @just --list
 
 # Start all services in Docker
-up:
-    docker compose up -d
+up replicas="1":
+    docker compose up -d --scale server={{replicas}}
 
 # Build Docker images
 build:
     docker compose build
 
 # Rebuild images and start all services
-rebuild:
-    docker compose up --build -d
+rebuild replicas="1":
+    docker compose up --build -d --scale server={{replicas}}
 
 # Stop all services
 down:

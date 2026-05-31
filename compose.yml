@@ -22,8 +22,6 @@ services:
       dockerfile: Dockerfile
       args:
         SEED_DATA: "true"
-    ports:
-      - "3000:3000"
     environment:
       DATABASE_URL: postgres://postgres:password@database:5432/data
       BIND_ADDRESS: "0.0.0.0:3000"
@@ -34,12 +32,11 @@ services:
       database:
         condition: service_healthy
 
-  website:
-    build:
-      context: website
-      dockerfile: Dockerfile
+  caddy:
+    build: .
     ports:
       - "80:80"
+      - "3000:3000"
     depends_on:
       - server
 
